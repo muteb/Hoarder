@@ -208,6 +208,10 @@ def zipdir(path, ziph):
             ziph.write(os.path.join(root, file))
 
 
+def create_zipfile():
+    zipf = zipfile.ZipFile('Arti.zip', 'w', allowZip64=True)
+    zipdir('Artifacts', zipf)
+    zipf.close()
 
 def main(argv=[]):
     # inital_flag()
@@ -239,9 +243,7 @@ def main(argv=[]):
         collect_artfacts(main_drive,arch,'wmi_per')
         collect_artfacts(main_drive,arch,'usrclass')
         # if eve == "DONE" and nt == "DONE" and hv=="DONE" and rc=="DONE":
-        zipf = zipfile.ZipFile('Arti.zip', 'w', allowZip64=True)
-        zipdir('Artifacts', zipf)
-        zipf.close()
+        create_zipfile()
 
     if args.events == False and  args.hives== False and  args.ntusers==False and  args.persistance==False  and  args.recent==False :
 
@@ -256,9 +258,7 @@ def main(argv=[]):
         collect_artfacts(main_drive,arch,'wmi_per')
         collect_artfacts(main_drive,arch,'usrclass')
         # if eve == "DONE" and nt == "DONE" and hv=="DONE" and rc=="DONE":
-        zipf = zipfile.ZipFile('Arti.zip', 'w', allowZip64=True)
-        zipdir('Artifacts', zipf)
-        zipf.close()
+        create_zipfile()
 
 
 if __name__ == '__main__':
