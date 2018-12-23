@@ -217,7 +217,7 @@ def main(argv=[]):
     parser.add_argument('-n', '--ntusers', action="store_true", help='Get all NTUsers files')
     parser.add_argument('-r', '--recent', action="store_true", help='Get all recent files')
     parser.add_argument('-p', '--persistance', action="store_true", help='Get all presistances from schudele tasks and WMI')
-    #parser.add_argument('-n', '--ntusers', action="store_true", help='Get all NTUsers files')
+    parser.add_argument('-l', '--lightweight', action="store_true", help='Get all and execulde the UsnJrl due to the size')
 
     args = parser.parse_args(argv[1:])
     # print args.events
@@ -228,6 +228,20 @@ def main(argv=[]):
     'Artifacts\\Ntfs','Artifacts\\Persistence','Artifacts\\Persistence\\WMI','Artifacts\\Persistence\\scheduled_task','Artifacts\\usrclass','Artifacts\\RecycleBin']
     for f in folders:
         os.mkdir(f)
+    if arges.lightweight =True:
+        collect_artfacts(main_drive,arch,'task_per')
+        collect_artfacts(main_drive,arch,'rcent_jmplst')
+        collect_artfacts(main_drive,arch,'ntfs')
+        collect_artfacts(main_drive,arch,'app_lst')
+        collect_artfacts(main_drive,arch,'user_pro')
+        collect_folders(main_drive,arch,'evt_logs')
+        collect_artfacts(main_drive,arch,'sys_hiv')
+        collect_artfacts(main_drive,arch,'wmi_per')
+        collect_artfacts(main_drive,arch,'usrclass')
+        # if eve == "DONE" and nt == "DONE" and hv=="DONE" and rc=="DONE":
+        zipf = zipfile.ZipFile('Arti.zip', 'w', allowZip64=True)
+        zipdir('Artifacts', zipf)
+        zipf.close()
 
     if args.events == False and  args.hives== False and  args.ntusers==False and  args.persistance==False  and  args.recent==False :
 
