@@ -232,21 +232,8 @@ def main(argv=[]):
     'Artifacts\\Ntfs','Artifacts\\Persistence','Artifacts\\Persistence\\WMI','Artifacts\\Persistence\\scheduled_task','Artifacts\\usrclass','Artifacts\\RecycleBin']
     for f in folders:
         os.mkdir(f)
-    if arges.lightweight =True:
-        collect_artfacts(main_drive,arch,'task_per')
-        collect_artfacts(main_drive,arch,'rcent_jmplst')
-        collect_artfacts(main_drive,arch,'ntfs')
-        collect_artfacts(main_drive,arch,'app_lst')
-        collect_artfacts(main_drive,arch,'user_pro')
-        collect_folders(main_drive,arch,'evt_logs')
-        collect_artfacts(main_drive,arch,'sys_hiv')
-        collect_artfacts(main_drive,arch,'wmi_per')
-        collect_artfacts(main_drive,arch,'usrclass')
-        # if eve == "DONE" and nt == "DONE" and hv=="DONE" and rc=="DONE":
-        create_zipfile()
-
+    
     if args.events == False and  args.hives== False and  args.ntusers==False and  args.persistance==False  and  args.recent==False :
-
         collect_artfacts(main_drive,arch,'task_per')
         collect_artfacts(main_drive,arch,'rcent_jmplst')
         collect_artfacts(main_drive,arch,'UsnJrnl')
