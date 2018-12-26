@@ -1,0 +1,170 @@
+
+all_artifacts_64:
+
+  rcent_jmplst:
+      output: 'Artifacts\\Recent'
+      path: '\\Users\\%s\\AppData\\Roaming\\Microsoft\\Windows\\Recent\\'
+      para: ''
+
+  sys_hiv: 
+      output: 'Artifacts\\Config\\'
+      path: '\\Windows\\System32\\config\\'
+      para:
+      - DEFAULT
+      - SAM
+      - SECURITY
+      - SOFTWARE
+      - SYSTEM
+      - DEFAULT.LOG1
+      - SAM.LOG1
+      - SECURITY.LOG1
+      - SOFTWARE.LOG1
+      - SYSTEM.LOG1
+      - DEFAULT.LOG2
+      - SAM.LOG2
+      - SECURITY.LOG2
+      - SOFTWARE.LOG2
+      - SYSTEM.LOG2
+      - DEFAULT.LOG
+      - SAM.LOG
+      - SECURITY.LOG
+      - SOFTWARE.LOG
+      - SYSTEM.LOG
+  
+  evt_logs: 
+      output: 'Artifacts\\Events'
+      path: '\\windows\\system32\\winevt\\Logs'
+      para: Event_Logs
+  
+  user_pro: 
+      output: 'Artifacts\\Ntuser'
+      path: '\\Users\\'
+      para: NTUSER.DAT
+  
+  app_lst: 
+      output: 'Artifacts\\applications'
+      path: '\\Windows\\AppCompat\\Programs\\'
+      para: 
+      - Amcache.hve
+      - RecentFileCache.bcf
+  
+  UsnJrnl: 
+      output: 'Artifacts\\Usnjrl'
+      path: '\\$Extend\\'
+      para: $UsnJrnl
+  
+  usrclass: 
+      output: Artifacts\\usrclass
+      path: \\Users\\%s\\AppData\\Local\\Microsoft\\Windows\\
+      para: UsrClass.dat
+
+  ntfs: 
+      output: 'Artifacts\\Ntfs'
+      path: '\\'
+      para: 
+      - $MFT
+      - $MFTMirr
+  
+  recyclebin: 
+      output: 'Artifacts\\RecycleBin'
+      path: '\\$Recycle.Bin\\'
+      para: ''
+  
+  wmi_per:
+      output: 'Artifacts\\Persistence\\WMI'
+      path: 
+      - '\\Windows\\System32\\wbem\\Repository\\'
+      - '\\Windows\\System32\\wbem\\Repository\\FS\\'
+      para: OBJECTS.DATA
+  
+  task_per:
+      output: 'Artifacts\\Persistence\\scheduled_task'
+      path: 
+      - '\\Windows\\System32\\Tasks'
+      - '\\Windows\\SysWOW64\\Tasks'
+      para: ''
+
+all_artifacts_32:
+
+  rcent_jmplst:
+      output: 'Artifacts\\Recent'
+      path: '\\Users\\%s\\AppData\\Roaming\\Microsoft\\Windows\\Recent\\'
+      para: ''
+  
+  sys_hiv: 
+      output: 'Artifacts\\Config\\'
+      path: '\\Windows\\System32\\config\\'
+      para:
+      - DEFAULT
+      - SAM
+      - SECURITY
+      - SOFTWARE
+      - SYSTEM
+      - DEFAULT.LOG1
+      - SAM.LOG1
+      - SECURITY.LOG1
+      - SOFTWARE.LOG1
+      - SYSTEM.LOG1
+      - DEFAULT.LOG2
+      - SAM.LOG2
+      - SECURITY.LOG2
+      - SOFTWARE.LOG2
+      - SYSTEM.LOG2
+      - DEFAULT.LOG
+      - SAM.LOG
+      - SECURITY.LOG
+      - SOFTWARE.LOG
+      - SYSTEM.LOG
+  
+  evt_logs: 
+      output: 'Artifacts\\Events'
+      path: '\\windows\\system32\\winevt\\Logs'
+      para: Event_Logs
+  
+  user_pro: 
+      output: 'Artifacts\\Ntuser'
+      path: '\\Users\\'
+      para: NTUSER.DAT
+  
+  app_lst: 
+      output: 'Artifacts\\applications'
+      path: '\\Windows\\AppCompat\\Programs\\'
+      para: 
+      - Amcache.hve
+      - RecentFileCache.bcf
+  
+  UsnJrnl: 
+      output: 'Artifacts\\Usnjrl'
+      path: '\\$Extend\\'
+      para: $UsnJrnl
+  
+  usrclass: 
+      output: 'Artifacts\\usrclass'
+      path: '\\Users\\%s\\AppData\\Local\\Microsoft\\Windows\\'
+      para: UsrClass.dat
+  
+  ntfs: 
+      output: 'Artifacts\\Ntfs'
+      path: '\\'
+      para:
+      - $MFT
+      - $MFTMirr
+  
+  recyclebin: 
+      output: 'Artifacts\\RecycleBin'
+      path: '\\$Recycle.Bin\\'
+      para: ''
+  
+  wmi_per:
+      output: 'Artifacts\\Persistence\\WMI'
+      path: 
+      - '\\Windows\\System32\\wbem\\Repository\\'
+      - '\\Windows\\System32\\wbem\\Repository\\FS\\'
+      para: 'OBJECTS.DATA'
+  
+  task_per:
+      output: 'Artifacts\\Persistence\\scheduled_task'
+      path: 
+      - '\\Windows\\System32\\Tasks'
+      - '\\Windows\\SysWOW64\\Tasks'
+      para: ''
