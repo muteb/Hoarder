@@ -7,6 +7,10 @@ import os
 import string
 import argparse
 import platform
+from system.commands import cmds
+import json
+import os
+import csv
 
 def category_lst(val):
 
@@ -44,7 +48,20 @@ def category_lst(val):
 
     return dic
 
-
+def get_system_live_det():
+    lst = ['osdetails','processlst','servicelst','partitationslst','get_network_interfaces','get_network_conn','get_dns_cache','getallusers','current_logged_in']
+    # main_dir = "Artifacts"
+    # if os.path.exists(main_dir):
+    #     os.rmdir(main_dir)
+    # os.mkdir(main_dir)
+    for i in lst:
+        commandcls = cmds(i)
+        info= commandcls.pass_command()
+        with open("Artifacts\\system_live\\"+i, 'w') as outfile:
+            try:
+                json.dump(info, outfile,ensure_ascii=False)
+            except OSError as err:
+                print "the error is %s"%err
 def get_vol():
     available_drives = ['%s:' % d for d in string.ascii_uppercase if os.path.exists('%s:' % d)]
     xf = platform.architecture()[0]
@@ -216,8 +233,12 @@ def create_zipfile():
 def main(argv=[]):
     # inital_flag()
     parser = argparse.ArgumentParser(description="Hashes check with common NSLR library and virustotal\n\n")
+    parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument('-e', '--events', action="store_true", help='Get all windows events')
-    parser.add_argument('-c', '--hives', action="store_true", help='Get all config hives')
+    parser.add_argument('-c', '--amcache', action="store_true", help='Get amcache or recentfile')
+    parser.add_argument('-m', '--mft', action="store_true", help='Get $MFT file')
+    parser.add_argument('-u', '--usnjrl', action="store_true", help='Get all usnjrl files')
+    parser.add_argument('-i', '--hives', action="store_true", help='Get all config hives')
     parser.add_argument('-n', '--ntusers', action="store_true", help='Get all NTUsers files')
     parser.add_argument('-r', '--recent', action="store_true", help='Get all recent files')
     parser.add_argument('-p', '--persistance', action="store_true", help='Get all presistances from schudele tasks and WMI')
@@ -229,11 +250,46 @@ def main(argv=[]):
 
     os.mkdir("Artifacts")
     folders= ['Artifacts\\Recent','Artifacts\\Config','Artifacts\\Events','Artifacts\\Ntuser','Artifacts\\applications','Artifacts\\Usnjrl',\
-    'Artifacts\\Ntfs','Artifacts\\Persistence','Artifacts\\Persistence\\WMI','Artifacts\\Persistence\\scheduled_task','Artifacts\\usrclass','Artifacts\\RecycleBin']
+    'Artifacts\\Ntfs','Artifacts\\Persistence','Artifacts\\Persistence\\WMI','Artifacts\\Persistence\\scheduled_task','Artifacts\\usrclass','Artifacts\\RecycleBin','Artifacts\\system_live']
     for f in folders:
         os.mkdir(f)
-    
-    if args.events == False and  args.hives== False and  args.ntusers==False and  args.persistance==False  and  args.recent==False :
+
+    if args.events == True:
+        collect_folders(main_drive,arch,'evt_logs')
+        get_system_live_det()
+        create_zipfile()
+    elif args.persistance == True:
+        collect_artfacts(main_drive,arch,'task_per')
+        collect_artfacts(main_drive,arch,'wmi_per')
+        get_system_live_det()
+        create_zipfile()
+    elif args.recent == True:
+        collect_artfacts(main_drive,arch,'rcent_jmplst')
+        get_system_live_det()
+        create_zipfile()
+    elif args.usnjrl ==True:
+        collect_artfacts(main_drive,arch,'UsnJrnl')
+        get_system_live_det()
+        create_zipfile()
+    elif args.mft ==True:
+        collect_artfacts(main_drive,arch,'ntfs')
+        get_system_live_det()
+        create_zipfile()
+    elif args.amcache == True:
+        collect_artfacts(main_drive,arch,'app_lst')
+        get_system_live_det()
+        create_zipfile()
+    elif args.ntusers == True:
+        collect_artfacts(main_drive,arch,'user_pro')
+        collect_artfacts(main_drive,arch,'usrclass')
+        get_system_live_det()
+        create_zipfile()
+    elif args.hives == True:
+        collect_artfacts(main_drive,arch,'sys_hiv')
+        get_system_live_det()
+        create_zipfile()
+    else:
+        
         collect_artfacts(main_drive,arch,'task_per')
         collect_artfacts(main_drive,arch,'rcent_jmplst')
         collect_artfacts(main_drive,arch,'UsnJrnl')
@@ -244,8 +300,24 @@ def main(argv=[]):
         collect_artfacts(main_drive,arch,'sys_hiv')
         collect_artfacts(main_drive,arch,'wmi_per')
         collect_artfacts(main_drive,arch,'usrclass')
-        # if eve == "DONE" and nt == "DONE" and hv=="DONE" and rc=="DONE":
+        get_system_live_det()
         create_zipfile()
+
+
+    # if args.events == False and args.mft == False and  args.amcache == False and args.usnjrl == False and  args.hives== False and  args.ntusers==False and  args.persistance==False  and  args.recent==False :
+    #     collect_artfacts(main_drive,arch,'task_per')
+    #     collect_artfacts(main_drive,arch,'rcent_jmplst')
+    #     collect_artfacts(main_drive,arch,'UsnJrnl')
+    #     collect_artfacts(main_drive,arch,'ntfs')
+    #     collect_artfacts(main_drive,arch,'app_lst')
+    #     collect_artfacts(main_drive,arch,'user_pro')
+    #     collect_folders(main_drive,arch,'evt_logs')
+    #     collect_artfacts(main_drive,arch,'sys_hiv')
+    #     collect_artfacts(main_drive,arch,'wmi_per')
+    #     collect_artfacts(main_drive,arch,'usrclass')
+    #     get_system_live_det()
+    #     # if eve == "DONE" and nt == "DONE" and hv=="DONE" and rc=="DONE":
+    #     create_zipfile()
 
 
 if __name__ == '__main__':
