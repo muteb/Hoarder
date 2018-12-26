@@ -7,45 +7,50 @@ import os
 import string
 import argparse
 import platform
-from system.commands import cmds
+from os import system
 import json
 import os
 import csv
 
+import yaml
+
+# ------------------------- Arguments Parsing ------------------------------
+
+
+parser = argparse.ArgumentParser(description="Hashes check with common NSLR library and virustotal\n\n")
+parser = argparse.ArgumentParser(add_help=True)
+parser.add_argument('-e', '--events', action="store_true", help='Get all windows events')
+parser.add_argument('-c', '--amcache', action="store_true", help='Get amcache or recentfile')
+parser.add_argument('-m', '--mft', action="store_true", help='Get $MFT file')
+parser.add_argument('-u', '--usnjrl', action="store_true", help='Get all usnjrl files')
+parser.add_argument('-i', '--hives', action="store_true", help='Get all config hives')
+parser.add_argument('-n', '--ntusers', action="store_true", help='Get all NTUsers files')
+parser.add_argument('-r', '--recent', action="store_true", help='Get all recent files')
+parser.add_argument('-p', '--persistance', action="store_true", help='Get all presistances from schudele tasks and WMI')
+parser.add_argument('-l', '--lightweight', action="store_true", help='Get all and execulde the UsnJrl due to the size')
+parser.add_argument('-y', '--yaml' , dest="yaml_config", help='Yaml file configuration')
+    	
+args = parser.parse_args(sys.argv[1:])
+
+# -------------------- Parse YAML File -------------------
+yaml_config = ""
+if args.yaml_config is None:
+  	yaml_path = ".\\Hoarder.yml"
+else:
+ 	yaml_path = args.yaml_config
+    	
+yaml_file = open(yaml_path, 'r')
+yaml_config = json.loads( json.dumps( yaml.load(yaml_file.read()) ) ) # parse the yaml_file and get the result as json format 
+yaml_file.close()
+   
+# -------------------------- Defined functions ----------------------------	
+	
+	
 def category_lst(val):
-
-
-    all_artifacts_64 = {'64bit':{\
-    'rcent_jmplst' :{'output':'Artifacts\\Recent','path':"\\Users\\%s\\AppData\\Roaming\\Microsoft\\Windows\\Recent\\",'para':''},\
-    'sys_hiv': {'output':'Artifacts\\Config\\','path':"\\Windows\\System32\\config\\",'para':['DEFAULT','SAM','SECURITY','SOFTWARE','SYSTEM','DEFAULT.LOG1','SAM.LOG1','SECURITY.LOG1','SOFTWARE.LOG1','SYSTEM.LOG1','DEFAULT.LOG2','SAM.LOG2','SECURITY.LOG2','SOFTWARE.LOG2','SYSTEM.LOG2','DEFAULT.LOG','SAM.LOG','SECURITY.LOG','SOFTWARE.LOG','SYSTEM.LOG']},\
-    'evt_logs': {'output':'Artifacts\\Events','path':"\\windows\\system32\\winevt\\Logs",'para':'Event_Logs'},\
-    'user_pro': {'output':'Artifacts\\Ntuser','path':"\\Users\\",'para':"NTUSER.DAT"},\
-    'app_lst': {'output':'Artifacts\\applications','path':"\\Windows\\AppCompat\\Programs\\",'para': ['Amcache.hve','RecentFileCache.bcf']},\
-    'UsnJrnl': {'output':'Artifacts\\Usnjrl','path':"\\$Extend\\",'para':'$UsnJrnl'},\
-    'usrclass': {'output':'Artifacts\\usrclass','path':"\\Users\\%s\\AppData\\Local\\Microsoft\\Windows\\",'para':'UsrClass.dat'},\
-    'ntfs' : {'output':'Artifacts\\Ntfs','path':"\\",'para':['$MFT','$MFTMirr']},\
-    'recyclebin' : {'output':'Artifacts\\RecycleBin','path':"\\$Recycle.Bin\\",'para':''},\
-    'wmi_per':{'output':'Artifacts\\Persistence\\WMI','path':['\\Windows\\System32\\wbem\\Repository\\','\\Windows\\System32\\wbem\\Repository\\FS\\'],'para':'OBJECTS.DATA'},\
-    'task_per':{'output':'Artifacts\\Persistence\\scheduled_task','path':['\\Windows\\System32\\Tasks','\\Windows\\SysWOW64\\Tasks'],'para':''}}}
-
-    all_artifacts_32 = {'32bit':{\
-    'rcent_jmplst' :{'output':'Artifacts\\Recent','path':"\\Users\\%s\\AppData\\Roaming\\Microsoft\\Windows\\Recent\\",'para':''},\
-    'sys_hiv': {'output':'Artifacts\\Config\\','path':"\\Windows\\System32\\config\\",'para':['DEFAULT','SAM','SECURITY','SOFTWARE','SYSTEM','DEFAULT.LOG1','SAM.LOG1','SECURITY.LOG1','SOFTWARE.LOG1','SYSTEM.LOG1','DEFAULT.LOG2','SAM.LOG2','SECURITY.LOG2','SOFTWARE.LOG2','SYSTEM.LOG2','DEFAULT.LOG','SAM.LOG','SECURITY.LOG','SOFTWARE.LOG','SYSTEM.LOG']},\
-    'evt_logs': {'output':'Artifacts\\Events','path':"\\windows\\system32\\winevt\\Logs",'para':'Event_Logs'},\
-    'user_pro': {'output':'Artifacts\\Ntuser','path':"\\Users\\",'para':"NTUSER.DAT"},\
-    'app_lst': {'output':'Artifacts\\applications','path':"\\Windows\\AppCompat\\Programs\\",'para': ['Amcache.hve','RecentFileCache.bcf']},\
-    'UsnJrnl': {'output':'Artifacts\\Usnjrl','path':"\\$Extend\\",'para':'$UsnJrnl'},\
-    'usrclass': {'output':'Artifacts\\usrclass','path':"\\Users\\%s\\AppData\\Local\\Microsoft\\Windows\\",'para':'UsrClass.dat'},\
-    'ntfs' : {'output':'Artifacts\\Ntfs','path':"\\",'para':['$MFT','$MFTMirr']},\
-    'recyclebin' : {'output':'Artifacts\\RecycleBin','path':"\\$Recycle.Bin\\",'para':''},\
-    'wmi_per':{'output':'Artifacts\\Persistence\\WMI','path':['\\Windows\\System32\\wbem\\Repository\\','\\Windows\\System32\\wbem\\Repository\\FS\\'],'para':'OBJECTS.DATA'},\
-    'task_per':{'output':'Artifacts\\Persistence\\scheduled_task','path':['\\Windows\\System32\\Tasks','\\Windows\\SysWOW64\\Tasks'],'para':''}}}
-
     if "64" in val:
-        dic = all_artifacts_64[val]
+        dic = yaml_config['all_artifacts_64']
     elif "32" in val:
-        dic = all_artifacts_32[val]
-
+        dic = yaml_config['all_artifacts_32']
     return dic
 
 def get_system_live_det():
@@ -55,13 +60,14 @@ def get_system_live_det():
     #     os.rmdir(main_dir)
     # os.mkdir(main_dir)
     for i in lst:
-        commandcls = cmds(i)
+        commandcls = system(i)
         info= commandcls.pass_command()
         with open("Artifacts\\system_live\\"+i, 'w') as outfile:
             try:
                 json.dump(info, outfile,ensure_ascii=False)
             except OSError as err:
-                print "the error is %s"%err
+                print "the error is %s" % err
+				
 def get_vol():
     available_drives = ['%s:' % d for d in string.ascii_uppercase if os.path.exists('%s:' % d)]
     xf = platform.architecture()[0]
@@ -231,21 +237,9 @@ def create_zipfile():
     zipf.close()
 
 def main(argv=[]):
-    # inital_flag()
-    parser = argparse.ArgumentParser(description="Hashes check with common NSLR library and virustotal\n\n")
-    parser = argparse.ArgumentParser(add_help=True)
-    parser.add_argument('-e', '--events', action="store_true", help='Get all windows events')
-    parser.add_argument('-c', '--amcache', action="store_true", help='Get amcache or recentfile')
-    parser.add_argument('-m', '--mft', action="store_true", help='Get $MFT file')
-    parser.add_argument('-u', '--usnjrl', action="store_true", help='Get all usnjrl files')
-    parser.add_argument('-i', '--hives', action="store_true", help='Get all config hives')
-    parser.add_argument('-n', '--ntusers', action="store_true", help='Get all NTUsers files')
-    parser.add_argument('-r', '--recent', action="store_true", help='Get all recent files')
-    parser.add_argument('-p', '--persistance', action="store_true", help='Get all presistances from schudele tasks and WMI')
-    parser.add_argument('-l', '--lightweight', action="store_true", help='Get all and execulde the UsnJrl due to the size')
-
-    args = parser.parse_args(argv[1:])
-    # print args.events
+    
+    
+	
     main_drive,arch = get_vol()
 
     os.mkdir("Artifacts")
