@@ -7,13 +7,23 @@ import os
 import string
 import argparse
 import platform
-from os import system
+from system.commands import cmds
 import json
-import os
 import csv
-
 import yaml
 
+
+# ----------------------------- check the existence of ymal config and rawcopy46.exe--------------------
+if os.path.isfile("Hoarder.yml") == False:
+    print "*"*80
+    print "please copy the ymal configuration into the same folder as Horader.exe"
+    print "*"*80
+    sys.exit()
+if os.path.isfile("RawCopy64.exe") == False:
+    print "*"*80
+    print "please copy the RawCopy64.exe configuration into the same folder as Horader.exe"
+    print "*"*80
+    sys.exit()
 # ------------------------- Arguments Parsing ------------------------------
 
 
@@ -29,7 +39,7 @@ parser.add_argument('-r', '--recent', action="store_true", help='Get all recent 
 parser.add_argument('-p', '--persistance', action="store_true", help='Get all presistances from schudele tasks and WMI')
 parser.add_argument('-l', '--lightweight', action="store_true", help='Get all and execulde the UsnJrl due to the size')
 parser.add_argument('-y', '--yaml' , dest="yaml_config", help='Yaml file configuration')
-    	
+
 args = parser.parse_args(sys.argv[1:])
 
 # -------------------- Parse YAML File -------------------
@@ -38,14 +48,14 @@ if args.yaml_config is None:
   	yaml_path = ".\\Hoarder.yml"
 else:
  	yaml_path = args.yaml_config
-    	
+
 yaml_file = open(yaml_path, 'r')
-yaml_config = json.loads( json.dumps( yaml.load(yaml_file.read()) ) ) # parse the yaml_file and get the result as json format 
+yaml_config = json.loads( json.dumps( yaml.load(yaml_file.read()) ) ) # parse the yaml_file and get the result as json format
 yaml_file.close()
-   
-# -------------------------- Defined functions ----------------------------	
-	
-	
+
+# -------------------------- Defined functions ----------------------------
+
+
 def category_lst(val):
     if "64" in val:
         dic = yaml_config['all_artifacts_64']
@@ -60,14 +70,14 @@ def get_system_live_det():
     #     os.rmdir(main_dir)
     # os.mkdir(main_dir)
     for i in lst:
-        commandcls = system(i)
+        commandcls = cmds(i)
         info= commandcls.pass_command()
         with open("Artifacts\\system_live\\"+i, 'w') as outfile:
             try:
                 json.dump(info, outfile,ensure_ascii=False)
             except OSError as err:
                 print "the error is %s" % err
-				
+
 def get_vol():
     available_drives = ['%s:' % d for d in string.ascii_uppercase if os.path.exists('%s:' % d)]
     xf = platform.architecture()[0]
@@ -237,9 +247,9 @@ def create_zipfile():
     zipf.close()
 
 def main(argv=[]):
-    
-    
-	
+
+
+
     main_drive,arch = get_vol()
 
     os.mkdir("Artifacts")
@@ -283,7 +293,7 @@ def main(argv=[]):
         get_system_live_det()
         create_zipfile()
     else:
-        
+
         collect_artfacts(main_drive,arch,'task_per')
         collect_artfacts(main_drive,arch,'rcent_jmplst')
         collect_artfacts(main_drive,arch,'UsnJrnl')
