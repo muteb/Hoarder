@@ -3,6 +3,7 @@ This script is made to collect the most valiable artifacts for foreniscs or inci
 
 
 #Compiling 
+
 You will need to compile the code using pyinstaller "pyinstaller --onefile --onconsole hoarder.py" and copy rawcopy64.exe & hoarder.ymal to the same folder with the exeutable.
 
 #Note: big thanks to jschicht for creating the amazing tool rawcopy which made ourlives easier. https://github.com/jschicht/RawCopy
