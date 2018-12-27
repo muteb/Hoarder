@@ -13,45 +13,6 @@ import csv
 import yaml
 
 
-# ----------------------------- check the existence of ymal config and rawcopy46.exe--------------------
-if os.path.isfile("Hoarder.yml") == False:
-    print "*"*80
-    print "please copy the ymal configuration into the same folder as Horader.exe"
-    print "*"*80
-    sys.exit()
-if os.path.isfile("RawCopy64.exe") == False:
-    print "*"*80
-    print "please copy the RawCopy64.exe configuration into the same folder as Horader.exe"
-    print "*"*80
-    sys.exit()
-# ------------------------- Arguments Parsing ------------------------------
-
-
-parser = argparse.ArgumentParser(description="Hashes check with common NSLR library and virustotal\n\n")
-parser = argparse.ArgumentParser(add_help=True)
-parser.add_argument('-e', '--events', action="store_true", help='Get all windows events')
-parser.add_argument('-c', '--amcache', action="store_true", help='Get amcache or recentfile')
-parser.add_argument('-m', '--mft', action="store_true", help='Get $MFT file')
-parser.add_argument('-u', '--usnjrl', action="store_true", help='Get all usnjrl files')
-parser.add_argument('-i', '--hives', action="store_true", help='Get all config hives')
-parser.add_argument('-n', '--ntusers', action="store_true", help='Get all NTUsers files')
-parser.add_argument('-r', '--recent', action="store_true", help='Get all recent files')
-parser.add_argument('-p', '--persistance', action="store_true", help='Get all presistances from schudele tasks and WMI')
-parser.add_argument('-l', '--lightweight', action="store_true", help='Get all and execulde the UsnJrl due to the size')
-parser.add_argument('-y', '--yaml' , dest="yaml_config", help='Yaml file configuration')
-
-args = parser.parse_args(sys.argv[1:])
-
-# -------------------- Parse YAML File -------------------
-yaml_config = ""
-if args.yaml_config is None:
-  	yaml_path = ".\\Hoarder.yml"
-else:
- 	yaml_path = args.yaml_config
-
-yaml_file = open(yaml_path, 'r')
-yaml_config = json.loads( json.dumps( yaml.load(yaml_file.read()) ) ) # parse the yaml_file and get the result as json format
-yaml_file.close()
 
 # -------------------------- Defined functions ----------------------------
 
@@ -248,6 +209,46 @@ def create_zipfile():
 
 def main(argv=[]):
 
+    # ----------------------------- check the existence of ymal config and rawcopy46.exe--------------------
+    if os.path.isfile("Hoarder.yml") == False:
+        print "*"*80
+        print "please copy the ymal configuration into the same folder as Horader.exe"
+        print "*"*80
+        sys.exit()
+    if os.path.isfile("RawCopy64.exe") == False:
+        print "*"*80
+        print "please copy the RawCopy64.exe configuration into the same folder as Horader.exe"
+        print "*"*80
+        sys.exit()
+    # ------------------------- Arguments Parsing ------------------------------
+
+
+    parser = argparse.ArgumentParser(description="Hashes check with common NSLR library and virustotal\n\n")
+    parser = argparse.ArgumentParser(add_help=True)
+    parser.add_argument('-e', '--events', action="store_true", help='Get all windows events')
+    parser.add_argument('-c', '--amcache', action="store_true", help='Get amcache or recentfile')
+    parser.add_argument('-m', '--mft', action="store_true", help='Get $MFT file')
+    parser.add_argument('-u', '--usnjrl', action="store_true", help='Get all usnjrl files')
+    parser.add_argument('-i', '--hives', action="store_true", help='Get all config hives')
+    parser.add_argument('-n', '--ntusers', action="store_true", help='Get all NTUsers files')
+    parser.add_argument('-r', '--recent', action="store_true", help='Get all recent files')
+    parser.add_argument('-p', '--persistance', action="store_true", help='Get all presistances from schudele tasks and WMI')
+    parser.add_argument('-l', '--lightweight', action="store_true", help='Get all and execulde the UsnJrl due to the size')
+    parser.add_argument('-y', '--yaml' , dest="yaml_config", help='Yaml file configuration')
+
+    args = parser.parse_args(sys.argv[1:])
+
+    # -------------------- Parse YAML File -------------------
+    global yaml_config
+    yaml_config = ""
+    if args.yaml_config is None:
+          yaml_path = ".\\Hoarder.yml"
+    else:
+         yaml_path = args.yaml_config
+
+    yaml_file = open(yaml_path, 'r')
+    yaml_config = json.loads( json.dumps( yaml.load(yaml_file.read()) ) ) # parse the yaml_file and get the result as json format
+    yaml_file.close()
 
 
     main_drive,arch = get_vol()
@@ -307,21 +308,6 @@ def main(argv=[]):
         get_system_live_det()
         create_zipfile()
 
-
-    # if args.events == False and args.mft == False and  args.amcache == False and args.usnjrl == False and  args.hives== False and  args.ntusers==False and  args.persistance==False  and  args.recent==False :
-    #     collect_artfacts(main_drive,arch,'task_per')
-    #     collect_artfacts(main_drive,arch,'rcent_jmplst')
-    #     collect_artfacts(main_drive,arch,'UsnJrnl')
-    #     collect_artfacts(main_drive,arch,'ntfs')
-    #     collect_artfacts(main_drive,arch,'app_lst')
-    #     collect_artfacts(main_drive,arch,'user_pro')
-    #     collect_folders(main_drive,arch,'evt_logs')
-    #     collect_artfacts(main_drive,arch,'sys_hiv')
-    #     collect_artfacts(main_drive,arch,'wmi_per')
-    #     collect_artfacts(main_drive,arch,'usrclass')
-    #     get_system_live_det()
-    #     # if eve == "DONE" and nt == "DONE" and hv=="DONE" and rc=="DONE":
-    #     create_zipfile()
 
 
 if __name__ == '__main__':
