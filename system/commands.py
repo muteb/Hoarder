@@ -87,24 +87,3 @@ class cmds:
             values =cmd.userloggedin()
         return values
 
-        # if self.command== 'get_file_dic':
-        #     x =  self.appcomand
-        #     cmd = file_act(x)
-        #     values = cmd.path_to_dict()
-        #     return values
-
-        # if self.command== 'get_file_metadata':
-        #     x =  self.appcomand
-        #     print x
-        #     cmd = file_act(x)
-        #     values = cmd.get_file_metadata()
-        #     return values
-
-
-
-
-#
-# commandcls = cmds(['get_file_dic',r'C:\\'])
-# info= commandcls.pass_command()
-# # data2=pickle.dumps(info)
-# print info

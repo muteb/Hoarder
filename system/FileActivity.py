@@ -7,7 +7,7 @@ class file_act:
     def __init__(self,xpath):
         # self.command= command
         self.path = xpath
-        print self.path[0]
+        #print self.path[0]
 
 
     def path_to_dict(self):
@@ -30,7 +30,7 @@ class file_act:
 
     def get_file_metadata(self):
         pathz = os.path.abspath(self.path)
-        print pathz
+        #print pathz
         d= {}
         d['file'] = []
         # d['metadata']= []
@@ -51,7 +51,7 @@ class file_act:
             })
         else:
             print'notfile'
-        print d
+        #print d
         return d
 
     def get_file_data(self):
