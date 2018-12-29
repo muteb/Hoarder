@@ -11,11 +11,12 @@ from system.commands import cmds
 import json
 import csv
 import yaml
-
+import platform
 
 
 # -------------------------- Defined functions ----------------------------
-
+global ou
+ou = platform.uname()[1]
 
 def category_lst(val):
     if "64" in val:
@@ -24,16 +25,16 @@ def category_lst(val):
         dic = yaml_config['all_artifacts_32']
     return dic
 
-def get_system_live_det():
-    lst = ['osdetails','processlst','servicelst','partitationslst','get_network_interfaces','get_network_conn','get_dns_cache','getallusers','current_logged_in']
-    # main_dir = "Artifacts"
-    # if os.path.exists(main_dir):
-    #     os.rmdir(main_dir)
-    # os.mkdir(main_dir)
-    for i in lst:
+def get_system_live_det(out,drv,arch,target):
+    drive = drv
+    varl = category_lst(arch)
+    path = varl[target]['path']
+    para = varl[target]['para']
+    var = varl[target]['output']
+    for i in para:
         commandcls = cmds(i)
         info= commandcls.pass_command()
-        with open("Artifacts\\system_live\\"+i, 'w') as outfile:
+        with open(out+var+i, 'w') as outfile:
             try:
                 json.dump(info, outfile,ensure_ascii=False)
             except OSError as err:
@@ -49,9 +50,13 @@ def get_vol():
 
 
 def rawcopy_aft(input,output):
-    file_e = 'RawCopy64.exe'+' /FileNamePath:' +input+' /OutputPath:'+output
-    print file_e
-    os.system(file_e)
+    if "$Extend" in input:
+        file_e = 'RawCopy64.exe'+' /FileNamePath:' +input+' /RawDirMode:1 /OutputPath:'+output
+        os.system(file_e)
+    else:
+        file_e = 'RawCopy64.exe'+' /FileNamePath:' +input+' /OutputPath:'+output
+        #print file_e
+        os.system(file_e)
 
 def rawcopy_filter(e,path):
     xe = str(e)
@@ -84,12 +89,13 @@ def perfom_actoin(drv,path,i,output):
     oxr =output
     rawcopy_aft(src,oxr)
 
-def collect_artfacts(drv,arch,target):
+def collect_artfacts(out, drv,arch,target):
     drive = drv
     varl = category_lst(arch)
     path = varl[target]['path']
     para = varl[target]['para']
-    output = varl[target]['output']
+    var = varl[target]['output']
+    output = out +"\\"+ var
     if isinstance(path, list):
         if target =='wmi_per':
             i = 0
@@ -117,7 +123,7 @@ def collect_artfacts(drv,arch,target):
                         dst = output+"\\SysWOW64"
                         copyDirectory(src,dst)
     elif isinstance(para, list):
-        if target  == 'sys_hiv':
+        if target  == 'Config':
             input = drv+ path
             #os.mkdir(new_dir)
             for x in para:
@@ -133,17 +139,17 @@ def collect_artfacts(drv,arch,target):
             for i in para:
                 perfom_actoin(drive,path,i,output)
     else:
-        if target  == 'user_pro' or target == 'rcent_jmplst' or target == 'usrclass':
+        if target  == 'Ntuser' or target == 'Recent' or target == 'usrclass':
             input = drv+ "\\Users\\"
             usr_fod = os.listdir(input)
             new_dir = output
             for x in usr_fod:
-                if target == 'rcent_jmplst':
+                if target == 'Recent':
                     src =  os.path.join(drive+path%x)
                     if os.path.exists(src):
                         ou= os.path.join(output+"\\"+x)
                         os.mkdir(ou)
-                        copyDirectory(src, ou+"\\recent")
+                        copyDirectory(src, ou+"\\Recent")
                     else:
                         pass
                 elif target =='usrclass':
@@ -185,13 +191,13 @@ def copyDirectory(src, dest):
     except OSError as e:
         print e
 
-def collect_folders(drv,arch,target):
+def collect_folders(out,drv,arch,target):
     drive = drv
     varl = category_lst(arch)
     path = varl[target]['path']
     para = varl[target]['para']
     path = drv+path
-    copyDirectory(path, 'Artifacts\\'+para)
+    copyDirectory(path, out+'\\'+para)
     return "DONE"
 
 
@@ -204,7 +210,7 @@ def zipdir(path, ziph):
 
 def create_zipfile():
     zipf = zipfile.ZipFile('Arti.zip', 'w', allowZip64=True)
-    zipdir('Artifacts', zipf)
+    zipdir(ou, zipf)
     zipf.close()
 
 def main(argv=[]):
@@ -253,64 +259,65 @@ def main(argv=[]):
 
     main_drive,arch = get_vol()
 
-    os.mkdir("Artifacts")
-    folders= ['Artifacts\\Recent','Artifacts\\Config','Artifacts\\Events','Artifacts\\Ntuser','Artifacts\\applications','Artifacts\\Usnjrl',\
-    'Artifacts\\Ntfs','Artifacts\\Persistence','Artifacts\\Persistence\\WMI','Artifacts\\Persistence\\scheduled_task','Artifacts\\usrclass','Artifacts\\RecycleBin','Artifacts\\system_live']
-    for f in folders:
-        os.mkdir(f)
+    os.mkdir(ou)
+    varl = yaml_config['all_artifacts_64']
+
+    for  key,vaues in varl.items():
+        output = varl[key]['output']
+
+        path = os.path.join(ou+"\\"+ key)
+        os.mkdir(path)
+
 
     if args.events == True:
-        collect_folders(main_drive,arch,'evt_logs')
+        collect_folders(main_drive,arch,'Events')
         get_system_live_det()
         create_zipfile()
     elif args.persistance == True:
-        collect_artfacts(main_drive,arch,'task_per')
-        collect_artfacts(main_drive,arch,'wmi_per')
+        collect_artfacts(main_drive,arch,'scheduled_task')
+        collect_artfacts(main_drive,arch,'WMI')
         get_system_live_det()
         create_zipfile()
     elif args.recent == True:
-        collect_artfacts(main_drive,arch,'rcent_jmplst')
+        collect_artfacts(main_drive,arch,'Recent')
         get_system_live_det()
         create_zipfile()
     elif args.usnjrl ==True:
-        collect_artfacts(main_drive,arch,'UsnJrnl')
+        collect_artfacts(main_drive,arch,'Usnjrl')
         get_system_live_det()
         create_zipfile()
     elif args.mft ==True:
-        collect_artfacts(main_drive,arch,'ntfs')
+        collect_artfacts(main_drive,arch,'Ntfs')
         get_system_live_det()
         create_zipfile()
     elif args.amcache == True:
-        collect_artfacts(main_drive,arch,'app_lst')
+        collect_artfacts(main_drive,arch,'applications')
         get_system_live_det()
         create_zipfile()
     elif args.ntusers == True:
-        collect_artfacts(main_drive,arch,'user_pro')
+        collect_artfacts(main_drive,arch,'Ntuser')
         collect_artfacts(main_drive,arch,'usrclass')
         get_system_live_det()
         create_zipfile()
     elif args.hives == True:
-        collect_artfacts(main_drive,arch,'sys_hiv')
+        collect_artfacts(main_drive,arch,'Config')
         get_system_live_det()
         create_zipfile()
     else:
-
-        collect_artfacts(main_drive,arch,'task_per')
-        collect_artfacts(main_drive,arch,'rcent_jmplst')
-        collect_artfacts(main_drive,arch,'UsnJrnl')
-        collect_artfacts(main_drive,arch,'ntfs')
-        collect_artfacts(main_drive,arch,'app_lst')
-        collect_artfacts(main_drive,arch,'user_pro')
-        collect_folders(main_drive,arch,'evt_logs')
-        collect_artfacts(main_drive,arch,'sys_hiv')
-        collect_artfacts(main_drive,arch,'wmi_per')
-        collect_artfacts(main_drive,arch,'usrclass')
-        get_system_live_det()
+        for key,vaues in varl.items():
+            output = varl[key]['output']
+            type = varl[key]['type']
+            if type =='folder':
+                collect_folders(ou,main_drive,arch,'Events')
+            elif type =='file':
+                collect_artfacts(ou,main_drive,arch,key)
+            elif type =='live':
+                get_system_live_det(ou,main_drive,arch,key)
         create_zipfile()
 
 
 
 if __name__ == '__main__':
-    if os.path.exists("Artifacts"):
-        shutil.rmtree("Artifacts")
+    if os.path.exists(ou):
+        shutil.rmtree(ou)
     main(sys.argv)
