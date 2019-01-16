@@ -1,14 +1,16 @@
-
+output_Content:
+    output:"Artifacts"
+    
 all_artifacts_64:
 
-  rcent_jmplst:
-      output: 'Artifacts\\Recent'
-      path: '\\Users\\%s\\AppData\\Roaming\\Microsoft\\Windows\\Recent\\'
+  Recent:
+      output: 'Recent'
+      path: '\Users\%s\AppData\Roaming\Microsoft\Windows\Recent\'
       para: ''
-
-  sys_hiv: 
-      output: 'Artifacts\\Config\\'
-      path: '\\Windows\\System32\\config\\'
+      type: 'file'
+  Config: 
+      output: 'Config\'
+      path: '\Windows\System32\config\'
       para:
       - DEFAULT
       - SAM
@@ -30,68 +32,96 @@ all_artifacts_64:
       - SECURITY.LOG
       - SOFTWARE.LOG
       - SYSTEM.LOG
+      - DRIVERS
+      - BBI
+      - ELAM
+      - COMPONENTS
+      type: 'file'
   
-  evt_logs: 
-      output: 'Artifacts\\Events'
-      path: '\\windows\\system32\\winevt\\Logs'
+  Events: 
+      output: 'Events'
+      path: '\windows\system32\winevt\Logs'
       para: Event_Logs
+      type: 'folder'
   
-  user_pro: 
-      output: 'Artifacts\\Ntuser'
-      path: '\\Users\\'
+  Ntuser: 
+      output: 'Ntuser'
+      path: '\Users\'
       para: NTUSER.DAT
+      type: 'file'
   
-  app_lst: 
-      output: 'Artifacts\\applications'
-      path: '\\Windows\\AppCompat\\Programs\\'
+  applications: 
+      output: 'applications'
+      path: '\Windows\AppCompat\Programs\'
       para: 
       - Amcache.hve
       - RecentFileCache.bcf
+      type: 'file'
+     
   
-  UsnJrnl: 
-      output: 'Artifacts\\Usnjrl'
-      path: '\\$Extend\\'
+  Usnjrl: 
+      output: 'Usnjrl'
+      path: '\$Extend\'
       para: $UsnJrnl
+      type: 'file'
   
   usrclass: 
-      output: Artifacts\\usrclass
-      path: \\Users\\%s\\AppData\\Local\\Microsoft\\Windows\\
-      para: UsrClass.dat
+      output: 'usrclass'
+      path: '\Users\%s\AppData\Local\Microsoft\Windows\'
+      para: 'UsrClass.dat'
+      type: 'file'
 
-  ntfs: 
-      output: 'Artifacts\\Ntfs'
-      path: '\\'
+  Ntfs: 
+      output: 'Ntfs'
+      path: '\'
       para: 
       - $MFT
-      - $MFTMirr
+      type: 'file'
   
-  recyclebin: 
-      output: 'Artifacts\\RecycleBin'
-      path: '\\$Recycle.Bin\\'
+  RecycleBin: 
+      output: 'RecycleBin'
+      path: '\$Recycle.Bin\'
       para: ''
+      type: 'file'
   
-  wmi_per:
-      output: 'Artifacts\\Persistence\\WMI'
+  WMI:
+      output: 'WMI'
       path: 
-      - '\\Windows\\System32\\wbem\\Repository\\'
-      - '\\Windows\\System32\\wbem\\Repository\\FS\\'
+      - '\Windows\System32\wbem\Repository\'
+      - '\Windows\System32\wbem\Repository\FS\'
       para: OBJECTS.DATA
+      type: 'file'
   
-  task_per:
-      output: 'Artifacts\\Persistence\\scheduled_task'
+  scheduled_task:
+      output: 'scheduled_task'
       path: 
-      - '\\Windows\\System32\\Tasks'
-      - '\\Windows\\SysWOW64\\Tasks'
+      - '\Windows\System32\Tasks'
+      - '\Windows\SysWOW64\Tasks'
       para: ''
+      type: 'file'
+  live:
+      output: 'live'
+      path: ''
+      para:
+      - osdetails
+      - processlst
+      - servicelst
+      - partitationslst
+      - get_network_interfaces
+      - get_network_conn
+      - get_dns_cache
+      - getallusers
+      - current_logged_in
+      type: 'live'
 
 all_artifacts_32:
 
-  rcent_jmplst:
+  Recent:
       output: 'Artifacts\\Recent'
-      path: '\\Users\\%s\\AppData\\Roaming\\Microsoft\\Windows\\Recent\\'
+      path: '\Users\%s\AppData\Roaming\Microsoft\Windows\Recent\'
       para: ''
   
-  sys_hiv: 
+  Config: 
       output: 'Artifacts\\Config\\'
       path: '\\Windows\\System32\\config\\'
       para:
@@ -116,24 +146,24 @@ all_artifacts_32:
       - SOFTWARE.LOG
       - SYSTEM.LOG
   
-  evt_logs: 
+  Events: 
       output: 'Artifacts\\Events'
       path: '\\windows\\system32\\winevt\\Logs'
       para: Event_Logs
   
-  user_pro: 
+  Ntuser: 
       output: 'Artifacts\\Ntuser'
-      path: '\\Users\\'
+      path: '\Users\'
       para: NTUSER.DAT
   
-  app_lst: 
+  applications: 
       output: 'Artifacts\\applications'
       path: '\\Windows\\AppCompat\\Programs\\'
       para: 
       - Amcache.hve
       - RecentFileCache.bcf
   
-  UsnJrnl: 
+  Usnjrl: 
       output: 'Artifacts\\Usnjrl'
       path: '\\$Extend\\'
       para: $UsnJrnl
@@ -143,26 +173,26 @@ all_artifacts_32:
       path: '\\Users\\%s\\AppData\\Local\\Microsoft\\Windows\\'
       para: UsrClass.dat
   
-  ntfs: 
+  Ntfs: 
       output: 'Artifacts\\Ntfs'
       path: '\\'
       para:
       - $MFT
       - $MFTMirr
   
-  recyclebin: 
+  RecycleBin: 
       output: 'Artifacts\\RecycleBin'
       path: '\\$Recycle.Bin\\'
       para: ''
   
-  wmi_per:
+  WMI:
       output: 'Artifacts\\Persistence\\WMI'
       path: 
       - '\\Windows\\System32\\wbem\\Repository\\'
       - '\\Windows\\System32\\wbem\\Repository\\FS\\'
       para: 'OBJECTS.DATA'
   
-  task_per:
+  scheduled_task:
       output: 'Artifacts\\Persistence\\scheduled_task'
       path: 
       - '\\Windows\\System32\\Tasks'

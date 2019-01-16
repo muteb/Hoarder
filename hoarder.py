@@ -16,7 +16,7 @@ import platform
 
 # -------------------------- Defined functions ----------------------------
 global ou
-ou = platform.uname()[1]
+ou = 'output'
 
 def category_lst(val):
     if "64" in val:
@@ -25,20 +25,21 @@ def category_lst(val):
         dic = yaml_config['all_artifacts_32']
     return dic
 
-def get_system_live_det(out,drv,arch,target):
-    drive = drv
-    varl = category_lst(arch)
-    path = varl[target]['path']
-    para = varl[target]['para']
-    var = varl[target]['output']
-    for i in para:
-        commandcls = cmds(i)
-        info= commandcls.pass_command()
-        with open(out+var+i, 'w') as outfile:
-            try:
-                json.dump(info, outfile,ensure_ascii=False)
-            except OSError as err:
-                print "the error is %s" % err
+# def get_system_live_det(out,drv,arch,target):
+#     drive = drv
+#     varl = category_lst(arch)
+#     path = varl[target]['path']
+#     para = varl[target]['para']
+#     var = varl[target]['output']
+#     for i in para:
+#         commandcls = cmds(i)
+#         info= commandcls.pass_command()
+#         oux = "\\"+out+"\\"
+#         with open(oux+var+i, 'w') as outfile:
+#             try:
+#                 json.dump(info, outfile,ensure_ascii=False)
+#             except OSError as err:
+#                 print "the error is %s" % err
 
 def get_vol():
     available_drives = ['%s:' % d for d in string.ascii_uppercase if os.path.exists('%s:' % d)]
@@ -51,9 +52,19 @@ def get_vol():
 
 def rawcopy_aft(input,output):
     if "$Extend" in input:
-        file_e = 'RawCopy64.exe'+' /FileNamePath:' +input+' /RawDirMode:1 /OutputPath:'+output
+        print "Copying " + str(input)
+        file_e = 'RawCopy64.exe'+' /FileNamePath:' +input+' /RawDirMode:1 /OutputPath:'+output +" /all"
         os.system(file_e)
+    elif "$MFT" in input:
+
+        inputx = input.replace("\\$MFT","")
+        for i in range(3):
+            val = str(i)
+            print "Copying " + val
+            file_e = 'RawCopy64.exe'+' /FileNamePath:' +inputx+val+' /OutputPath:'+output
+            os.system(file_e)
     else:
+        print "Copying " + str(input)
         file_e = 'RawCopy64.exe'+' /FileNamePath:' +input+' /OutputPath:'+output
         #print file_e
         os.system(file_e)
@@ -83,7 +94,7 @@ def rawcopy_filter(e,path):
 
 
 def perfom_actoin(drv,path,i,output):
-    src = drv+path+i
+    src = drv+path+str(i)
     #folder = 'Artifacts\\'+i
     #os.mkdir(folder)
     oxr =output
@@ -97,7 +108,7 @@ def collect_artfacts(out, drv,arch,target):
     var = varl[target]['output']
     output = out +"\\"+ var
     if isinstance(path, list):
-        if target =='wmi_per':
+        if target =='WMI':
             i = 0
             for x in path:
                 input = drv+ x
@@ -108,7 +119,7 @@ def collect_artfacts(out, drv,arch,target):
                     dst = output+"\\"+str(i)+para
                     os.mkdir(dst)
                     rawcopy_aft(src,dst)
-        elif target =='task_per':
+        elif target =='scheduled_task':
             i = 0
             for x in path:
                 input = drv+ x
@@ -214,6 +225,7 @@ def create_zipfile():
     zipf.close()
 
 def main(argv=[]):
+    #print argv
 
     # ----------------------------- check the existence of ymal config and rawcopy46.exe--------------------
     if os.path.isfile("Hoarder.yml") == False:
@@ -236,13 +248,17 @@ def main(argv=[]):
     parser.add_argument('-m', '--mft', action="store_true", help='Get $MFT file')
     parser.add_argument('-u', '--usnjrl', action="store_true", help='Get all usnjrl files')
     parser.add_argument('-i', '--hives', action="store_true", help='Get all config hives')
-    parser.add_argument('-n', '--ntusers', action="store_true", help='Get all NTUsers files')
+    parser.add_argument('-g', '--live', action="store_true", help='Get all live ex. network connection, services..etc ')
+    parser.add_argument('-n', '--ntusers', action="store_true", help='Get all NTUsers and usercalss files')
     parser.add_argument('-r', '--recent', action="store_true", help='Get all recent files')
-    parser.add_argument('-p', '--persistance', action="store_true", help='Get all presistances from schudele tasks and WMI')
-    parser.add_argument('-l', '--lightweight', action="store_true", help='Get all and execulde the UsnJrl due to the size')
+    parser.add_argument('-p', '--schudele', action="store_true", help='Get all presistances from schudele tasks and WMI')
+    parser.add_argument('-w', '--wmi', action="store_true", help='Get all presistances from  WMI')
+    parser.add_argument('-a', '--all', action="store_true", help='Get all')
     parser.add_argument('-y', '--yaml' , dest="yaml_config", help='Yaml file configuration')
 
-    args = parser.parse_args(sys.argv[1:])
+
+
+    args = parser.parse_args(argv[1:])
 
     # -------------------- Parse YAML File -------------------
     global yaml_config
@@ -270,40 +286,38 @@ def main(argv=[]):
 
 
     if args.events == True:
-        collect_folders(main_drive,arch,'Events')
-        get_system_live_det()
-        create_zipfile()
-    elif args.persistance == True:
-        collect_artfacts(main_drive,arch,'scheduled_task')
-        collect_artfacts(main_drive,arch,'WMI')
-        get_system_live_det()
-        create_zipfile()
-    elif args.recent == True:
-        collect_artfacts(main_drive,arch,'Recent')
-        get_system_live_det()
-        create_zipfile()
-    elif args.usnjrl ==True:
-        collect_artfacts(main_drive,arch,'Usnjrl')
-        get_system_live_det()
-        create_zipfile()
-    elif args.mft ==True:
-        collect_artfacts(main_drive,arch,'Ntfs')
-        get_system_live_det()
-        create_zipfile()
-    elif args.amcache == True:
-        collect_artfacts(main_drive,arch,'applications')
-        get_system_live_det()
-        create_zipfile()
-    elif args.ntusers == True:
-        collect_artfacts(main_drive,arch,'Ntuser')
-        collect_artfacts(main_drive,arch,'usrclass')
-        get_system_live_det()
-        create_zipfile()
-    elif args.hives == True:
-        collect_artfacts(main_drive,arch,'Config')
-        get_system_live_det()
-        create_zipfile()
-    else:
+        collect_folders(ou,main_drive,arch,'Events')
+
+    if args.schudele == True:
+        collect_artfacts(ou,main_drive,arch,'scheduled_task')
+
+    if args.wmi == True:
+        collect_artfacts(ou,main_drive,arch,'WMI')
+
+    if args.recent == True:
+        collect_artfacts(ou,main_drive,arch,'Recent')
+
+    if args.usnjrl ==True:
+        collect_artfacts(ou,main_drive,arch,'Usnjrl')
+
+    if args.mft ==True:
+        collect_artfacts(ou,main_drive,arch,'Ntfs')
+
+    if args.amcache == True:
+        collect_artfacts(ou,main_drive,arch,'applications')
+
+    if args.ntusers == True:
+        collect_artfacts(ou,main_drive,arch,'Ntuser')
+        collect_artfacts(ou,main_drive,arch,'usrclass')
+
+    if args.hives == True:
+        collect_artfacts(ou,main_drive,arch,'Config')
+
+    # if args.live == True:
+    #     get_system_live_det(ou,main_drive,arch,key)
+
+    if args.all ==True:
+    # if args.live == False and args.wmi == False and args.usrclass == False and args.hives == False and args.ntusers == False and args.amcache == False and args.mft ==False and args.usnjrl ==False  and args.recent == False and args.persistance == False and args.events == False:
         for key,vaues in varl.items():
             output = varl[key]['output']
             type = varl[key]['type']
@@ -311,13 +325,14 @@ def main(argv=[]):
                 collect_folders(ou,main_drive,arch,'Events')
             elif type =='file':
                 collect_artfacts(ou,main_drive,arch,key)
-            elif type =='live':
-                get_system_live_det(ou,main_drive,arch,key)
-        create_zipfile()
+            # elif type =='live':
+            #     get_system_live_det(ou,main_drive,arch,key)
+    #create_zipfile()
 
 
 
 if __name__ == '__main__':
     if os.path.exists(ou):
         shutil.rmtree(ou)
+    #print sys.argv
     main(sys.argv)

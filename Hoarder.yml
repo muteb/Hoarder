@@ -5,12 +5,12 @@ all_artifacts_64:
 
   Recent:
       output: 'Recent'
-      path: '\\Users\\%s\\AppData\\Roaming\\Microsoft\\Windows\\Recent\\'
+      path: '\Users\%s\AppData\Roaming\Microsoft\Windows\Recent\'
       para: ''
       type: 'file'
   Config: 
-      output: 'Config\\'
-      path: '\\Windows\\System32\\config\\'
+      output: 'Config\'
+      path: '\Windows\System32\config\'
       para:
       - DEFAULT
       - SAM
@@ -32,23 +32,27 @@ all_artifacts_64:
       - SECURITY.LOG
       - SOFTWARE.LOG
       - SYSTEM.LOG
+      - DRIVERS
+      - BBI
+      - ELAM
+      - COMPONENTS
       type: 'file'
   
   Events: 
       output: 'Events'
-      path: '\\windows\\system32\\winevt\\Logs'
+      path: '\windows\system32\winevt\Logs'
       para: Event_Logs
       type: 'folder'
   
   Ntuser: 
       output: 'Ntuser'
-      path: '\\Users\\'
+      path: '\Users\'
       para: NTUSER.DAT
       type: 'file'
   
   applications: 
       output: 'applications'
-      path: '\\Windows\\AppCompat\\Programs\\'
+      path: '\Windows\AppCompat\Programs\'
       para: 
       - Amcache.hve
       - RecentFileCache.bcf
@@ -57,50 +61,47 @@ all_artifacts_64:
   
   Usnjrl: 
       output: 'Usnjrl'
-      path: '\\$Extend\\'
+      path: '\$Extend\'
       para: $UsnJrnl
       type: 'file'
   
   usrclass: 
       output: 'usrclass'
-      path: '\\Users\\%s\\AppData\\Local\\Microsoft\\Windows\\'
+      path: '\Users\%s\AppData\Local\Microsoft\Windows\'
       para: 'UsrClass.dat'
       type: 'file'
 
   Ntfs: 
       output: 'Ntfs'
-      path: '\\'
+      path: '\'
       para: 
       - $MFT
-      - $MFTMirr
       type: 'file'
   
   RecycleBin: 
       output: 'RecycleBin'
-      path: '\\$Recycle.Bin\\'
+      path: '\$Recycle.Bin\'
       para: ''
       type: 'file'
   
   WMI:
-      output: 'Persistence\\WMI'
+      output: 'WMI'
       path: 
-      - '\\Windows\\System32\\wbem\\Repository\\'
-      - '\\Windows\\System32\\wbem\\Repository\\FS\\'
+      - '\Windows\System32\wbem\Repository\'
+      - '\Windows\System32\wbem\Repository\FS\'
       para: OBJECTS.DATA
       type: 'file'
   
   scheduled_task:
-      output: 'Persistence\\scheduled_task'
+      output: 'scheduled_task'
       path: 
-      - '\\Windows\\System32\\Tasks'
-      - '\\Windows\\SysWOW64\\Tasks'
+      - '\Windows\System32\Tasks'
+      - '\Windows\SysWOW64\Tasks'
       para: ''
       type: 'file'
   live:
-      output: '\live\'
-      path: 
-      - '\\Windows\\System32\\Tasks'
-      - '\\Windows\\SysWOW64\\Tasks'
+      output: 'live'
+      path: ''
       para:
       - osdetails
       - processlst
@@ -117,7 +118,7 @@ all_artifacts_32:
 
   Recent:
       output: 'Artifacts\\Recent'
-      path: '\\Users\\%s\\AppData\\Roaming\\Microsoft\\Windows\\Recent\\'
+      path: '\Users\%s\AppData\Roaming\Microsoft\Windows\Recent\'
       para: ''
   
   Config: 
