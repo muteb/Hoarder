@@ -41,7 +41,7 @@ all_artifacts:
       path64: '\programdata\microsoft\search\data\applications\windows\'
       para: Windows.edb
       type: 'file'
-      copyType: 'rawcopy'
+      copyType: 'justCopy'
       description: 'Windows Search artifacts'
   Config: 
       output: 'Config\'
@@ -73,7 +73,7 @@ all_artifacts:
       - ELAM
       - COMPONENTS
       type: 'file'
-      copyType: 'rawcopy'
+      copyType: 'justCopy'
       description: 'System hives'
   
   Events: 
@@ -91,7 +91,7 @@ all_artifacts:
       path64: '\Users\*'
       para: 'NTUSER.DAT'
       type: 'file'
-      copyType: 'rawcopy'
+      copyType: 'justCopy'
       description: 'All users hives'
   
   applications: 
@@ -102,7 +102,7 @@ all_artifacts:
       - Amcache.hve
       - RecentFileCache.bcf
       type: 'file'
-      copyType: 'rawcopy'
+      copyType: 'justCopy'
       description: 'Amcache files'
   
   usrclass: 
@@ -111,7 +111,7 @@ all_artifacts:
       path64: '\Users\*\AppData\Local\Microsoft\Windows\'
       para: 'UsrClass.dat'
       type: 'file'
-      copyType: 'rawcopy'
+      copyType: 'justCopy'
       description: 'UserClass.dat file for all the users'
       
   PowerShellHistory: 
@@ -129,8 +129,10 @@ all_artifacts:
       path64: '\'
       para: 
       - $MFT
+      - $MFTMirr
+      - $LogFile
       type: 'file'
-      copyType: 'rawcopy'
+      copyType: 'justCopy'
       description: '$MFT file'
   
   RecycleBin: 
@@ -197,7 +199,7 @@ all_artifacts:
     path64: '\Users\*\AppData\Local\Microsoft\Windows\WebCache\'
     para: 'WebCacheV01.dat'
     type: 'file'
-    copyType: 'rawcopy'
+    copyType: 'justCopy'
     description: 'Internet Explorer Data'
   IECookies:
     output: 'IECookies'
@@ -205,7 +207,7 @@ all_artifacts:
     path64: '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\'
     para: ''
     type: 'folder'
-    copyType: 'rawcopy'
+    copyType: 'justCopy'
     description: 'Internet Explorer Cookies'
   ChromeData:
     output: 'ChromeData'
@@ -220,7 +222,7 @@ all_artifacts:
     - 'Cache'
     - 'Cookies'
     type: 'file'
-    copyType: 'rawcopy'
+    copyType: 'justCopy'
     description: 'Chrome Data'
   FirefoxData:
     output: 'FirefoxData'
@@ -230,7 +232,7 @@ all_artifacts:
     - 'places.sqlite'
     - 'cookies.sqlite'
     type: 'file'
-    copyType: 'rawcopy'
+    copyType: 'justCopy'
     description: 'Firefox Data'
 
 

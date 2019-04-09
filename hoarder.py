@@ -1,4 +1,3 @@
-
 import yaml
 import json
 import os
@@ -11,6 +10,8 @@ from datetime import datetime
 import glob
 import logging
 import psutil
+import pytsk3
+import wmi
 
 p = psutil.Process(os.getpid())
 p.nice(0x00000040)
@@ -97,35 +98,46 @@ def getPaths(path):
     results.append(paths)
     return results
 
-def rawcopy_aft(input,output):
-    if "$Extend" in input:
-        if not os.path.exists(output):
-            os.makedirs(output)
-        print "Copying " + str(input)
-        file_e = 'RawCopy{}.exe'.format(arch.replace("bit",""))+' /FileNamePath:"' +input+'" /RawDirMode:1 /OutputPath:"'+output +'" /all'
-        os.system(file_e)
-    elif "$MFT" in input:
-        if not os.path.exists(output):
-            os.makedirs(output)
-        inputx = input.replace("\\$MFT","")
-        for i in range(3):
-            val = str(i)
-            print(output)
-            print "Copying " + val
-            file_e = 'RawCopy{}.exe'.format(arch.replace("bit",""))+' /FileNamePath:"' +inputx+val+'" /OutputPath:"'+output+'"'
-            print(file_e)
-            os.system("cd")
-            os.system(file_e)
-    else:
-        if os.path.exists(input):
-            if not os.path.exists(output):
-                os.makedirs(output)
-            print "Copying " + str(input)
-            file_e = 'RawCopy{}.exe'.format(arch.replace("bit",""))+' /FileNamePath:"' +input+'" /OutputPath:"'+output +'"'
-            print(file_e)
-            os.system(file_e)
-        else:
-            logging.warning("[!] Unable to copy the file '{}' ".format(input))
+def GetPhysicalDisk(driveLetter):
+	for physical_disk in wmi.WMI().Win32_DiskDrive():
+		logical_disks = []
+		for partition in physical_disk.associators ("Win32_DiskDriveToDiskPartition"):
+			for logical_disk in partition.associators ("Win32_LogicalDiskToPartition"):
+				if driveLetter.lower() == str(logical_disk.DeviceID).lower():
+					return physical_disk.DeviceID
+
+def justCopy(srcPath,dstPath):
+    # Modified version of : https://gist.github.com/glassdfir/7f2a2d381dc17a6a4637
+    driveLetter = srcPath.split("\\")[0]
+    imagefile = GetPhysicalDisk(driveLetter)
+    imagehandle = pytsk3.Img_Info(imagefile)
+    partitionTable = pytsk3.Volume_Info(imagehandle)
+
+    for partition in partitionTable:
+        try:
+            filesystemObject = pytsk3.FS_Info(imagehandle, offset=(partition.start*512))
+            parsedname = os.path.abspath(srcPath).replace(driveLetter,"").replace("\\","/")
+            fileobject = filesystemObject.open(parsedname)
+            OutFileName = fileobject.info.name.name
+            FinalOutDir = dstPath
+            if not os.path.exists(FinalOutDir):
+                os.makedirs(FinalOutDir)
+            FinalFilePath = os.path.join(FinalOutDir, OutFileName)
+            OutFile = open(FinalFilePath, 'w')
+            if fileobject.info.meta.size > 0:
+                logging.info("[+] Copying the file {} ".format(srcPath))
+                filedata = fileobject.read_random(0,fileobject.info.meta.size)
+                logging.info("[+] Successfully copied the file '{}' !".format(srcPath))
+            else:
+                logging.warning("[!] Unable to copy the file {} . The file is Empty!".format(srcPath))
+            OutFile.write(filedata)
+            OutFile.close
+
+            return True
+        except:
+            pass
+    logging.warning("[!] Unable to copy the file '{}' ".format(srcPath))
+    return False
 
 def CopyFile(src,dest):
     try:
@@ -176,14 +188,14 @@ def collect_artfacts(out, drive,arch,target):
                     foldername = foldernames[i]
                     path = paths[i]
                     GetMetaData(path,target)
-                    if copyType == 'rawcopy':
-                        rawcopy_aft(path,os.path.join(output,foldername))           
+                    if copyType == 'justCopy':
+                        justCopy(path,os.path.join(output,foldername))           
                     elif copyType == 'normal':
                         CopyFile(path,os.path.join(output,foldername))
             else:
                 GetMetaData(src,target)
-                if copyType == 'rawcopy':
-                    rawcopy_aft(src,output)
+                if copyType == 'justCopy':
+                    justCopy(src,output)
                 elif copyType == 'normal':
                     CopyFile(src,output)
         elif typeOfArt == "folder" or typeOfArt == "dir":
@@ -192,8 +204,9 @@ def collect_artfacts(out, drive,arch,target):
                 if not len(os.listdir(src)) == 0:
                     if copyType == 'normal':
                         copyDirectory(src,output)
-                    elif copyType == 'rawcopy':
-                        raise ValueError("Rawcopy for folders is not supported yet (Sorry !)")
+                    elif copyType == 'justCopy':
+                        #justCopy(src,output,True)
+                        raise ValueError("justCopy for folders is not supported yet (Sorry !)")
         else:
             raise ValueError("YAML formate Error. 'type' should be only file,folder or dir")
 
