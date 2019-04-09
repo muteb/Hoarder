@@ -1,16 +1,52 @@
 output_Content:
-    output:"Artifacts"
+ output: 'output'
     
-all_artifacts_64:
+all_artifacts:
 
   Recent:
       output: 'Recent'
-      path: '\Users\%s\AppData\Roaming\Microsoft\Windows\Recent\'
+      path23: '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\'
+      path64: '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\'
       para: ''
+      type: 'folder'
+      copyType: 'normal'
+      description: 'Recently opened files'
+  Startup:
+      output: 'startup'
+      path32: '\Windows\System32\WDI\LogFiles\StartupInfo\'
+      path64: '\Windows\System32\WDI\LogFiles\StartupInfo\'
+      para: ''
+      type: 'folder'
+      copyType: 'normal'
+      description: 'Startup info'
+  SRUM:
+      output: 'srum'
+      path32: '\Windows\System32\SRU\'
+      path64: '\Windows\System32\SRU\'
+      para: ''
+      type: 'folder'
+      copyType: 'normal'
+      description: 'SRUM folder'
+  Firwall:
+      output: 'firewall'
+      path32: '\Windows\System32\LogFiles\Firewall\'
+      path64: '\Windows\System32\LogFiles\Firewall\'
+      para: ''
+      type: 'folder'
+      copyType: 'normal'
+      description: 'Firewall Logs'
+  WindowsIndexSearch:
+      output: 'WindowsIndexSearch'
+      path32: '\programdata\microsoft\search\data\applications\windows\'
+      path64: '\programdata\microsoft\search\data\applications\windows\'
+      para: Windows.edb
       type: 'file'
+      copyType: 'rawcopy'
+      description: 'Windows Search artifacts'
   Config: 
       output: 'Config\'
-      path: '\Windows\System32\config\'
+      path32: '\Windows\System32\config\'
+      path64: '\Windows\System32\config\'
       para:
       - DEFAULT
       - SAM
@@ -37,164 +73,166 @@ all_artifacts_64:
       - ELAM
       - COMPONENTS
       type: 'file'
+      copyType: 'rawcopy'
+      description: 'System hives'
   
   Events: 
       output: 'Events'
-      path: '\windows\system32\winevt\Logs'
-      para: Event_Logs
+      path32: '\windows\system32\winevt\Logs'
+      path64: '\windows\system32\winevt\Logs'
+      para: ''
       type: 'folder'
+      copyType: 'normal'
+      description: 'Windows event logs'
   
   Ntuser: 
       output: 'Ntuser'
-      path: '\Users\'
-      para: NTUSER.DAT
+      path32: '\Users\*'
+      path64: '\Users\*'
+      para: 'NTUSER.DAT'
       type: 'file'
+      copyType: 'rawcopy'
+      description: 'All users hives'
   
   applications: 
       output: 'applications'
-      path: '\Windows\AppCompat\Programs\'
+      path32: '\Windows\AppCompat\Programs\'
+      path64: '\Windows\AppCompat\Programs\'
       para: 
       - Amcache.hve
       - RecentFileCache.bcf
       type: 'file'
-     
-  
-  Usnjrl: 
-      output: 'Usnjrl'
-      path: '\$Extend\'
-      para: $UsnJrnl
-      type: 'file'
+      copyType: 'rawcopy'
+      description: 'Amcache files'
   
   usrclass: 
       output: 'usrclass'
-      path: '\Users\%s\AppData\Local\Microsoft\Windows\'
+      path32: '\Users\*\AppData\Local\Microsoft\Windows\'
+      path64: '\Users\*\AppData\Local\Microsoft\Windows\'
       para: 'UsrClass.dat'
       type: 'file'
+      copyType: 'rawcopy'
+      description: 'UserClass.dat file for all the users'
+      
+  PowerShellHistory: 
+      output: 'PowerShellHistory'
+      path32: '\Users\*\Appdata\Roaming\Microsoft\Windows\PowerShell\PSReadline\'
+      path64: '\Users\*\Appdata\Roaming\Microsoft\Windows\PowerShell\PSReadline\'
+      para: 'ConsoleHost_history.txt'
+      type: 'file'
+      copyType: 'normal'
+      description: 'PowerShell history for all the users'
 
   Ntfs: 
       output: 'Ntfs'
-      path: '\'
+      path32: '\'
+      path64: '\'
       para: 
       - $MFT
       type: 'file'
+      copyType: 'rawcopy'
+      description: '$MFT file'
   
   RecycleBin: 
       output: 'RecycleBin'
-      path: '\$Recycle.Bin\'
+      path32: '\$Recycle.Bin\'
+      path64: '\$Recycle.Bin\'
       para: ''
-      type: 'file'
+      type: 'folder'
+      copyType: 'normal'
+      description: 'RecycleBin Files'
   
   WMI:
       output: 'WMI'
-      path: 
+      path32: 
       - '\Windows\System32\wbem\Repository\'
       - '\Windows\System32\wbem\Repository\FS\'
-      para: OBJECTS.DATA
+      path64: 
+      - '\Windows\System32\wbem\Repository\'
+      - '\Windows\System32\wbem\Repository\FS\'
+      para: 'OBJECTS.DATA'
       type: 'file'
+      copyType: 'normal'
+      description: 'WMI OBJECTS.DATA file'
   
   scheduled_task:
       output: 'scheduled_task'
-      path: 
+      path32: 
+      - '\Windows\System32\Tasks'
+      - '\Windows\SysWOW64\Tasks'
+      path64: 
       - '\Windows\System32\Tasks'
       - '\Windows\SysWOW64\Tasks'
       para: ''
-      type: 'file'
-  live:
-      output: 'live'
-      path: ''
-      para:
-      - osdetails
-      - processlst
-      - servicelst
-      - partitationslst
-      - get_network_interfaces
-      - get_network_conn
-      - get_dns_cache
-      - getallusers
-      - current_logged_in
-      type: 'live'
+      type: 'folder'
+      copyType: 'normal'
+      description: 'Scheduled Tasks files'
+  BMC:
+    output: 'BMC'
+    path32: '\Users\*\AppData\Local\Microsoft\Terminal Server Client\Cache'
+    path64: '\Users\*\AppData\Local\Microsoft\Terminal Server Client\Cache'
+    para: '*.bmc'
+    type: 'file'
+    copyType: 'normal'
+    description: 'BMC files for all the users'
+  prefetch:
+    output: 'prefetch'
+    path32: '\Windows\prefetch\'
+    path64: '\Windows\prefetch\'
+    para: '*.pf'
+    type: 'file'
+    copyType: 'normal'
+    description: 'Prefetch files'
+  WMITraceLogs:
+    output: 'WMI Trace Logs'
+    path32: '\Windows\System32\LogFiles\WMI\'
+    path64: '\Windows\System32\LogFiles\WMI\'
+    para: ''
+    type: 'folder'
+    copyType: 'normal'
+    description: 'WMI Trace Logs'
+  IEData:
+    output: 'IEData'
+    path32: '\Users\*\AppData\Local\Microsoft\Windows\WebCache\'
+    path64: '\Users\*\AppData\Local\Microsoft\Windows\WebCache\'
+    para: 'WebCacheV01.dat'
+    type: 'file'
+    copyType: 'rawcopy'
+    description: 'Internet Explorer Data'
+  IECookies:
+    output: 'IECookies'
+    path32: '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\'
+    path64: '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\'
+    para: ''
+    type: 'folder'
+    copyType: 'rawcopy'
+    description: 'Internet Explorer Cookies'
+  ChromeData:
+    output: 'ChromeData'
+    path32: 
+    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default'
+    - '\Users\*\AppData\local\Google\Chrome\User Data\Default'
+    path64: 
+    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default'
+    - '\Users\*\AppData\local\Google\Chrome\User Data\Default'
+    para: 
+    - 'History'
+    - 'Cache'
+    - 'Cookies'
+    type: 'file'
+    copyType: 'rawcopy'
+    description: 'Chrome Data'
+  FirefoxData:
+    output: 'FirefoxData'
+    path32: '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\*'
+    path64: '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\*'
+    para: 
+    - 'places.sqlite'
+    - 'cookies.sqlite'
+    type: 'file'
+    copyType: 'rawcopy'
+    description: 'Firefox Data'
 
-all_artifacts_32:
 
-  Recent:
-      output: 'Artifacts\\Recent'
-      path: '\Users\%s\AppData\Roaming\Microsoft\Windows\Recent\'
-      para: ''
-  
-  Config: 
-      output: 'Artifacts\\Config\\'
-      path: '\\Windows\\System32\\config\\'
-      para:
-      - DEFAULT
-      - SAM
-      - SECURITY
-      - SOFTWARE
-      - SYSTEM
-      - DEFAULT.LOG1
-      - SAM.LOG1
-      - SECURITY.LOG1
-      - SOFTWARE.LOG1
-      - SYSTEM.LOG1
-      - DEFAULT.LOG2
-      - SAM.LOG2
-      - SECURITY.LOG2
-      - SOFTWARE.LOG2
-      - SYSTEM.LOG2
-      - DEFAULT.LOG
-      - SAM.LOG
-      - SECURITY.LOG
-      - SOFTWARE.LOG
-      - SYSTEM.LOG
-  
-  Events: 
-      output: 'Artifacts\\Events'
-      path: '\\windows\\system32\\winevt\\Logs'
-      para: Event_Logs
-  
-  Ntuser: 
-      output: 'Artifacts\\Ntuser'
-      path: '\Users\'
-      para: NTUSER.DAT
-  
-  applications: 
-      output: 'Artifacts\\applications'
-      path: '\\Windows\\AppCompat\\Programs\\'
-      para: 
-      - Amcache.hve
-      - RecentFileCache.bcf
-  
-  Usnjrl: 
-      output: 'Artifacts\\Usnjrl'
-      path: '\\$Extend\\'
-      para: $UsnJrnl
-  
-  usrclass: 
-      output: 'Artifacts\\usrclass'
-      path: '\\Users\\%s\\AppData\\Local\\Microsoft\\Windows\\'
-      para: UsrClass.dat
-  
-  Ntfs: 
-      output: 'Artifacts\\Ntfs'
-      path: '\\'
-      para:
-      - $MFT
-      - $MFTMirr
-  
-  RecycleBin: 
-      output: 'Artifacts\\RecycleBin'
-      path: '\\$Recycle.Bin\\'
-      para: ''
-  
-  WMI:
-      output: 'Artifacts\\Persistence\\WMI'
-      path: 
-      - '\\Windows\\System32\\wbem\\Repository\\'
-      - '\\Windows\\System32\\wbem\\Repository\\FS\\'
-      para: 'OBJECTS.DATA'
-  
-  scheduled_task:
-      output: 'Artifacts\\Persistence\\scheduled_task'
-      path: 
-      - '\\Windows\\System32\\Tasks'
-      - '\\Windows\\SysWOW64\\Tasks'
-      para: ''
+
+ 

@@ -1,45 +1,46 @@
-import os
-import sys
-import shutil
-import zipfile
-import subprocess
+
+import yaml
+import json
 import os
 import string
+import platform
+import sys
+import shutil
 import argparse
-import platform
-from system.commands import cmds
-import json
-import csv
-import yaml
-import platform
+from datetime import datetime
+import glob
+import logging
+import psutil
 
+p = psutil.Process(os.getpid())
+p.nice(0x00000040)
 
-# -------------------------- Defined functions ----------------------------
+logging.basicConfig(filename='hoarder.log',mode='w',level=logging.INFO,format='%(asctime)s - %(levelname)s - %(message)s')
+
+parser = argparse.ArgumentParser(description="Hoarder is a tool to collect windows artifacts.\n\n")
+parser.add_argument('-a', '--all', action="store_true", help='Get all')
+
+global yaml_config
+
+if os.path.exists("hoarder.yml"):
+    yaml_file = open('hoarder.yml', 'r')
+else:
+    print("[*] Could not Find Configurations File 'hoarder.yml'!")
+    sys.exit()
+yaml_config = json.loads( json.dumps( yaml.safe_load(yaml_file.read()) ) ) # parse the yaml_file and get the result as json format
+yaml_file.close()
+
+allArtifacts = yaml_config['all_artifacts']
+
+for key,value in allArtifacts.items():
+    parser.add_argument('--'+key, action="store_true", help=allArtifacts[key]['description'])
+
+args = parser.parse_args()
+
 global ou
-ou = 'output'
-
-def category_lst(val):
-    if "64" in val:
-        dic = yaml_config['all_artifacts_64']
-    elif "32" in val:
-        dic = yaml_config['all_artifacts_32']
-    return dic
-
-# def get_system_live_det(out,drv,arch,target):
-#     drive = drv
-#     varl = category_lst(arch)
-#     path = varl[target]['path']
-#     para = varl[target]['para']
-#     var = varl[target]['output']
-#     for i in para:
-#         commandcls = cmds(i)
-#         info= commandcls.pass_command()
-#         oux = "\\"+out+"\\"
-#         with open(oux+var+i, 'w') as outfile:
-#             try:
-#                 json.dump(info, outfile,ensure_ascii=False)
-#             except OSError as err:
-#                 print "the error is %s" % err
+ou = os.getenv('COMPUTERNAME')
+global metadata
+metadata = []
 
 def get_vol():
     available_drives = ['%s:' % d for d in string.ascii_uppercase if os.path.exists('%s:' % d)]
@@ -49,290 +50,184 @@ def get_vol():
         if "Windows" in dee and "Users" in dee:
             return drive,xf
 
+# Get the drive that contains windows installation and windows architecture. 
+main_drive,arch = get_vol()
 
-def rawcopy_aft(input,output):
-    if "$Extend" in input:
-        print "Copying " + str(input)
-        file_e = 'RawCopy64.exe'+' /FileNamePath:' +input+' /RawDirMode:1 /OutputPath:'+output +" /all"
-        os.system(file_e)
-    elif "$MFT" in input:
-
-        inputx = input.replace("\\$MFT","")
-        for i in range(3):
-            val = str(i)
-            print "Copying " + val
-            file_e = 'RawCopy64.exe'+' /FileNamePath:' +inputx+val+' /OutputPath:'+output
-            os.system(file_e)
+def GetMetaDataForFile(path,artType):
+    if os.path.isfile(path):
+        status = os.stat(path)
+        ctime = datetime.utcfromtimestamp(status.st_ctime).strftime('%Y-%m-%d %H:%M:%S')
+        mtime = datetime.utcfromtimestamp(status.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+        atime = datetime.utcfromtimestamp(status.st_atime).strftime('%Y-%m-%d %H:%M:%S')
+        pathMetadata = "\""+path+"\","+str(status.st_size)+","+ctime+","+mtime+","+atime+","+artType
+        metadata.append(pathMetadata)
     else:
-        print "Copying " + str(input)
-        file_e = 'RawCopy64.exe'+' /FileNamePath:' +input+' /OutputPath:'+output
-        #print file_e
-        os.system(file_e)
+        return ""
 
-def rawcopy_filter(e,path):
-    xe = str(e)
-    xxe = xe.split()
-    if "Ntuser" in path:
-        input = xxe[3].replace("'","").replace("\\\\","\\")
-        output = path
-        rawcopy_aft(input,output)
-
-    lst=[]
-    lst3 =[]
-    for f in xxe:
-        xf =  " ".join(f.split("denied:")[0].split("),"))
-        for xnf in xf:
-
-             if "('C:" in xf:
-                 lst.append(xf.split("('")[1].replace("',",""))
-    lst2 = list(set(lst))
-    for sl in lst2:
-        sl = sl.replace("\\\\","\\")
-        lst3.append(sl)
-    for xnn in lst3:
-        rawcopy_aft(xnn,path)
-
-
-def perfom_actoin(drv,path,i,output):
-    src = drv+path+str(i)
-    #folder = 'Artifacts\\'+i
-    #os.mkdir(folder)
-    oxr =output
-    rawcopy_aft(src,oxr)
-
-def collect_artfacts(out, drv,arch,target):
-    drive = drv
-    varl = category_lst(arch)
-    path = varl[target]['path']
-    para = varl[target]['para']
-    var = varl[target]['output']
-    output = out +"\\"+ var
-    if isinstance(path, list):
-        if target =='WMI':
-            i = 0
-            for x in path:
-                input = drv+ x
-                i = i+1
-                src =  os.path.join(drive+x +para)
-                file_ex = os.path.isfile(src)
-                if file_ex == True:
-                    dst = output+"\\"+str(i)+para
-                    os.mkdir(dst)
-                    rawcopy_aft(src,dst)
-        elif target =='scheduled_task':
-            i = 0
-            for x in path:
-                input = drv+ x
-                i = i+1
-                src =  os.path.join(drive+x +para)
-                file_ex = os.path.isdir(src)
-                if file_ex == True:
-                    if '32' in x:
-                        dst = output+"\\system32"
-                        copyDirectory(src,dst)
-                    if '64' in x:
-                        dst = output+"\\SysWOW64"
-                        copyDirectory(src,dst)
-    elif isinstance(para, list):
-        if target  == 'Config':
-            input = drv+ path
-            #os.mkdir(new_dir)
-            for x in para:
-                try:
-                    src =  os.path.join(drive+path +x)
-                    file_ex = os.path.isfile(src)
-                    if file_ex == True:
-                        dst = output
-                        rawcopy_aft(src,dst)
-                except IOError as e:
-                    print e
-        else:
-            for i in para:
-                perfom_actoin(drive,path,i,output)
+def GetMetaData(path,artType):
+    if os.path.isdir(path):
+        for root, dirs, files in os.walk(path, topdown=False):
+            for name in files:
+                GetMetaDataForFile(os.path.join(root, name),artType)
     else:
-        if target  == 'Ntuser' or target == 'Recent' or target == 'usrclass':
-            input = drv+ "\\Users\\"
-            usr_fod = os.listdir(input)
-            new_dir = output
-            for x in usr_fod:
-                if target == 'Recent':
-                    src =  os.path.join(drive+path%x)
-                    if os.path.exists(src):
-                        ou= os.path.join(output+"\\"+x)
-                        os.mkdir(ou)
-                        copyDirectory(src, ou+"\\Recent")
-                    else:
-                        pass
-                elif target =='usrclass':
-                    usr= output+"\\"+x
-                    os.mkdir(usr)
-                    src =  os.path.join(drive+path%x+para)
-                    #print src
-                    file_ex = os.path.isfile(src)
-                    if file_ex == True:
-                        dst = usr
-                        rawcopy_aft(src,dst)
-                    else:
-                        pass
-                else:
-                    try:
-                        oxr = os.path.join(new_dir +"\\" + x)
-                        os.mkdir(oxr)
-                        src =  os.path.join(drive+path +x +"\\"+ para)
-                        file_ex = os.path.isfile(src)
-                        if file_ex == True:
-                            dst = oxr
-                            rawcopy_aft(src,dst)
-                    except IOError as e:
-                        print e
-
-        else:
-            perfom_actoin(drive,path,para,output)
-    return "DONE"
-
+        GetMetaDataForFile(path,artType)
 
 def copyDirectory(src, dest):
     try:
-
-        shutil.copytree(src, dest)
+        if os.path.exists(src):
+            logging.info("[+] Copying the folder {} ".format(src))
+            shutil.copytree(src, dest)
+            logging.info("[+] Successfully copied the folder '{}' !".format(src))
     # Directories are the same
-    except shutil.Error as e:
-        rawcopy_filter(e,"config")
+    except:
+        logging.warning("[!] Unable to copy the Directory : "+src)
 
-    except OSError as e:
-        print e
-
-def collect_folders(out,drv,arch,target):
-    drive = drv
-    varl = category_lst(arch)
-    path = varl[target]['path']
-    para = varl[target]['para']
-    path = drv+path
-    copyDirectory(path, out+'\\'+para)
-    return "DONE"
-
-
-
-def zipdir(path, ziph):
-    for root, dirs, files in os.walk(path):
-        for file in files:
-            ziph.write(os.path.join(root, file))
-
-
-def create_zipfile():
-    zipf = zipfile.ZipFile('Arti.zip', 'w', allowZip64=True)
-    zipdir(ou, zipf)
-    zipf.close()
-
-def main(argv=[]):
-    #print argv
-
-    # ----------------------------- check the existence of ymal config and rawcopy46.exe--------------------
-    if os.path.isfile("Hoarder.yml") == False:
-        print "*"*80
-        print "please copy the ymal configuration into the same folder as Horader.exe"
-        print "*"*80
-        sys.exit()
-    if os.path.isfile("RawCopy64.exe") == False:
-        print "*"*80
-        print "please copy the RawCopy64.exe configuration into the same folder as Horader.exe"
-        print "*"*80
-        sys.exit()
-    # ------------------------- Arguments Parsing ------------------------------
-
-
-    parser = argparse.ArgumentParser(description="Hashes check with common NSLR library and virustotal\n\n")
-    parser = argparse.ArgumentParser(add_help=True)
-    parser.add_argument('-e', '--events', action="store_true", help='Get all windows events')
-    parser.add_argument('-c', '--amcache', action="store_true", help='Get amcache or recentfile')
-    parser.add_argument('-m', '--mft', action="store_true", help='Get $MFT file')
-    parser.add_argument('-u', '--usnjrl', action="store_true", help='Get all usnjrl files')
-    parser.add_argument('-i', '--hives', action="store_true", help='Get all config hives')
-    parser.add_argument('-g', '--live', action="store_true", help='Get all live ex. network connection, services..etc ')
-    parser.add_argument('-n', '--ntusers', action="store_true", help='Get all NTUsers and usercalss files')
-    parser.add_argument('-r', '--recent', action="store_true", help='Get all recent files')
-    parser.add_argument('-p', '--schudele', action="store_true", help='Get all presistances from schudele tasks and WMI')
-    parser.add_argument('-w', '--wmi', action="store_true", help='Get all presistances from  WMI')
-    parser.add_argument('-a', '--all', action="store_true", help='Get all')
-    parser.add_argument('-y', '--yaml' , dest="yaml_config", help='Yaml file configuration')
-
-
-
-    args = parser.parse_args(argv[1:])
-
-    # -------------------- Parse YAML File -------------------
-    global yaml_config
-    yaml_config = ""
-    if args.yaml_config is None:
-          yaml_path = ".\\Hoarder.yml"
+def getPaths(path):
+    results = []
+    foldernames = []
+    paths = []
+    if "*" in path or "?" in path:
+        for absPath in glob.glob(path):
+            foldernames.append(absPath[path.find("*"):absPath.find("\\",path.find("*"))])
+            paths.append(absPath)
     else:
-         yaml_path = args.yaml_config
+        foldernames.append(path[path.rindex("\\")+1::])
+        paths.append(path)
+    results.append(foldernames)
+    results.append(paths)
+    return results
 
-    yaml_file = open(yaml_path, 'r')
-    yaml_config = json.loads( json.dumps( yaml.load(yaml_file.read()) ) ) # parse the yaml_file and get the result as json format
-    yaml_file.close()
+def rawcopy_aft(input,output):
+    if "$Extend" in input:
+        if not os.path.exists(output):
+            os.makedirs(output)
+        print "Copying " + str(input)
+        file_e = 'RawCopy{}.exe'.format(arch.replace("bit",""))+' /FileNamePath:"' +input+'" /RawDirMode:1 /OutputPath:"'+output +'" /all'
+        os.system(file_e)
+    elif "$MFT" in input:
+        if not os.path.exists(output):
+            os.makedirs(output)
+        inputx = input.replace("\\$MFT","")
+        for i in range(3):
+            val = str(i)
+            print(output)
+            print "Copying " + val
+            file_e = 'RawCopy{}.exe'.format(arch.replace("bit",""))+' /FileNamePath:"' +inputx+val+'" /OutputPath:"'+output+'"'
+            print(file_e)
+            os.system("cd")
+            os.system(file_e)
+    else:
+        if os.path.exists(input):
+            if not os.path.exists(output):
+                os.makedirs(output)
+            print "Copying " + str(input)
+            file_e = 'RawCopy{}.exe'.format(arch.replace("bit",""))+' /FileNamePath:"' +input+'" /OutputPath:"'+output +'"'
+            print(file_e)
+            os.system(file_e)
+        else:
+            logging.warning("[!] Unable to copy the file '{}' ".format(input))
 
+def CopyFile(src,dest):
+    try:
+        if os.path.exists(src):
+            if not os.path.exists(dest):
+                os.makedirs(dest)
+            logging.info("[+] Copying the file {} ".format(src))
+            shutil.copy(src,dest)
+            logging.info("[+] Successfully copied the file '{}' !".format(src))
+    except:
+        logging.warning("[!] Unable to copy the file {} ".format(src))
 
-    main_drive,arch = get_vol()
+def collect_artfacts(out, drive,arch,target):
+    allArtifacts = yaml_config['all_artifacts']
+    typeOfArt = allArtifacts[target]['type']
+    if arch == "32":
+        paths = allArtifacts[target]['path32']
+    else:
+        paths = allArtifacts[target]['path64']
 
-    os.mkdir(ou)
-    varl = yaml_config['all_artifacts_64']
+    paras = allArtifacts[target]['para']
+    destFolder = allArtifacts[target]['output']
+    copyType = allArtifacts[target]['copyType']
+    output = os.path.abspath(os.path.join(out,destFolder))
+    srcs = []
+    
+    if isinstance(paths,list):
+        for path in paths:
+            if isinstance(paras,list):
+                for para in paras: 
+                    srcs.append(os.path.join(drive,path,para))
+            else:
+                srcs.append(os.path.join(drive,path,paras))
+    else:
+        if isinstance(paras,list):
+            for para in paras: 
+                srcs.append(os.path.join(drive,paths,para))
+        else:
+            srcs.append(os.path.join(drive,paths,paras))
 
-    for  key,vaues in varl.items():
-        output = varl[key]['output']
+    for src in srcs:
+        if typeOfArt == "file":
+            if "*" in src or "?" in src:
+                allPaths = getPaths(src)
+                foldernames = allPaths[0]
+                paths = allPaths[1]
+                for i in range(len(foldernames)):
+                    foldername = foldernames[i]
+                    path = paths[i]
+                    GetMetaData(path,target)
+                    if copyType == 'rawcopy':
+                        rawcopy_aft(path,os.path.join(output,foldername))           
+                    elif copyType == 'normal':
+                        CopyFile(path,os.path.join(output,foldername))
+            else:
+                GetMetaData(src,target)
+                if copyType == 'rawcopy':
+                    rawcopy_aft(src,output)
+                elif copyType == 'normal':
+                    CopyFile(src,output)
+        elif typeOfArt == "folder" or typeOfArt == "dir":
+            if os.path.exists(src):
+                GetMetaData(src,target)
+                if not len(os.listdir(src)) == 0:
+                    if copyType == 'normal':
+                        copyDirectory(src,output)
+                    elif copyType == 'rawcopy':
+                        raise ValueError("Rawcopy for folders is not supported yet (Sorry !)")
+        else:
+            raise ValueError("YAML formate Error. 'type' should be only file,folder or dir")
 
-        path = os.path.join(ou+"\\"+ key)
-        os.mkdir(path)
-
-
-    if args.events == True:
-        collect_folders(ou,main_drive,arch,'Events')
-
-    if args.schudele == True:
-        collect_artfacts(ou,main_drive,arch,'scheduled_task')
-
-    if args.wmi == True:
-        collect_artfacts(ou,main_drive,arch,'WMI')
-
-    if args.recent == True:
-        collect_artfacts(ou,main_drive,arch,'Recent')
-
-    if args.usnjrl ==True:
-        collect_artfacts(ou,main_drive,arch,'Usnjrl')
-
-    if args.mft ==True:
-        collect_artfacts(ou,main_drive,arch,'Ntfs')
-
-    if args.amcache == True:
-        collect_artfacts(ou,main_drive,arch,'applications')
-
-    if args.ntusers == True:
-        collect_artfacts(ou,main_drive,arch,'Ntuser')
-        collect_artfacts(ou,main_drive,arch,'usrclass')
-
-    if args.hives == True:
-        collect_artfacts(ou,main_drive,arch,'Config')
-
-    # if args.live == True:
-    #     get_system_live_det(ou,main_drive,arch,key)
-
+def main():
+    varl = yaml_config['all_artifacts']
     if args.all ==True:
-    # if args.live == False and args.wmi == False and args.usrclass == False and args.hives == False and args.ntusers == False and args.amcache == False and args.mft ==False and args.usnjrl ==False  and args.recent == False and args.persistance == False and args.events == False:
-        for key,vaues in varl.items():
-            output = varl[key]['output']
-            type = varl[key]['type']
-            if type =='folder':
-                collect_folders(ou,main_drive,arch,'Events')
-            elif type =='file':
-                collect_artfacts(ou,main_drive,arch,key)
-            # elif type =='live':
-            #     get_system_live_det(ou,main_drive,arch,key)
-    #create_zipfile()
+        logging.info("[+] Collecting all the artifact specifided in the YAML File.")
+        for  key,vaues in varl.items():
+            logging.info("[+] Collecting the artifact '{}' ".format(key))
+            collect_artfacts(ou,main_drive,arch,key)
 
+    else:
+        for  key,vaues in varl.items():
+            if getattr(args,key) == True:
+                logging.info("[+] Collecting the artifact '{}' ".format(key))
+                collect_artfacts(ou,main_drive,arch,key)
+    
+    with open(os.path.join(ou,"metadata.csv"),"w") as output:
+        logging.info("[+] Writing artifacts metadata to 'metadata.csv' ")
+        for line in metadata:
+            if line is not "":
+                output.write(line+"\n")
 
 
 if __name__ == '__main__':
+    logging.info("[+] Hoarder Started!")
     if os.path.exists(ou):
         shutil.rmtree(ou)
-    #print sys.argv
-    main(sys.argv)
+    os.mkdir(ou)
+    main()  
+    logging.info("[+] Collecting artifacts finished!")
+    logging.info("[+] Adding the output folder to archive.")
+    logging.shutdown()
+    shutil.move("hoarder.log",ou)
+    shutil.make_archive(ou, 'zip', ou)    
+    if os.path.exists(ou):
+        shutil.rmtree(ou)
