@@ -23,7 +23,6 @@ parser.add_argument('-a', '--all', action="store_true", help='Get all')
 
 global yaml_config
 yaml_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "hoarder.yml")
-print(yaml_path)
 if os.path.exists(yaml_path):
     yaml_file = open(yaml_path, 'r')
 else:
