@@ -306,10 +306,13 @@ def main():
     if args.services:
         GetServices()
     if args.all ==True:
+        GetProcesses()
+        GetServices()
         logging.info("[+] Collecting all the artifact specifided in the YAML File.")
         for  key,vaues in varl.items():
             logging.info("[+] Collecting the artifact '{}' ".format(key))
             collect_artfacts(ou,main_drive,arch,key)
+        
 
     else:
         for  key,vaues in varl.items():
