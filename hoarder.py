@@ -27,6 +27,7 @@ parser.add_argument('-p', '--processes', action="store_true", help='Collect info
 parser.add_argument('-s', '--services', action="store_true", help='Collect information about the system services.')
 
 global yaml_config
+
 yaml_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "hoarder.yml")
 if os.path.exists(yaml_path):
     yaml_file = open(yaml_path, 'r')
