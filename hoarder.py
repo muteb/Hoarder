@@ -12,6 +12,9 @@ import logging
 import psutil
 import pytsk3
 import wmi
+import hashlib
+
+
 
 p = psutil.Process(os.getpid())
 p.nice(0x00000040)
@@ -20,6 +23,8 @@ logging.basicConfig(filename='hoarder.log',mode='w',level=logging.INFO,format='%
 
 parser = argparse.ArgumentParser(description="Hoarder is a tool to collect windows artifacts.\n\n")
 parser.add_argument('-a', '--all', action="store_true", help='Get all')
+parser.add_argument('-p', '--processes', action="store_true", help='Collect information about the running processes.')
+parser.add_argument('-s', '--services', action="store_true", help='Collect information about the system services.')
 
 global yaml_config
 yaml_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "hoarder.yml")
@@ -42,6 +47,90 @@ global ou
 ou = os.getenv('COMPUTERNAME')
 global metadata
 metadata = []
+
+
+
+def md5(fname):
+    hash_md5 = hashlib.md5()
+    with open(fname, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
+
+def GetProcesses():
+    results = []
+    attr = ['ppid','pid', 'name', 'username','cmdline','connections','create_time','cwd','exe','nice','open_files']
+    # Removed : environ,threads,cpu_percent
+    for process in psutil.process_iter():
+        MD5Hash = ""
+        process_info = process.as_dict(attrs=attr)
+        process_path = process_info.get('exe')
+
+        open_files = process_info['open_files']
+        del process_info['open_files']
+        fixed_open_files = []
+
+        if open_files:
+            for file_info in open_files:
+                fixed_open_files.append(file_info[0])
+        else:
+            process_info['open_files'] = []
+            
+            
+        process_info['open_files'] = fixed_open_files
+        
+        cmdline = process_info['cmdline']
+        del process_info['cmdline']
+        fixed_cmdline = ""
+        if  cmdline:
+            fixed_cmdline = " ".join(cmdline)
+            process_info['cmdline'] = fixed_cmdline
+        else:
+            process_info['cmdline'] = ""
+        
+        connections = process_info['connections']
+        fixed_connections = []
+        del process_info['connections']
+
+        if connections:
+            for connection in connections:
+                connection_ = {}
+                connection_['local_ip'] = connection.laddr.ip
+                connection_['local_port'] = connection.laddr.port
+                connection_['protocole'] = "TCP" if connection.type == 1 else "UDP"
+                if connection.raddr:
+                    connection_['remote_ip'] = connection.raddr.ip
+                    connection_['remote_port'] = connection.raddr.port
+                connection_['status'] = connection.status
+                fixed_connections.append(connection_)
+                
+            process_info['connections'] = fixed_connections
+        else:
+            process_info['connections'] = []
+
+        if process_path:
+            MD5Hash = md5(process_path)
+        process_info['md5'] = MD5Hash
+        results.append(process_info)
+
+    result = json.dumps(results)
+
+    with open(os.path.join(ou,"processes.json"),"w") as out:
+        out.write(result)
+
+
+def GetServices():
+    results = []
+    for service in psutil.win_service_iter():
+        encoded_dict = {}
+        for key,value in service.as_dict().iteritems():
+            if value and isinstance(value,str) and isinstance(key,str):
+                encoded_dict[unicode(key,"utf-8",errors="ignore")] = unicode(value,"utf-8",errors="ignore")
+        results.append(encoded_dict)
+    result = json.dumps(results)
+    with open(os.path.join(ou,"services.json"),"w") as out:
+        out.write(result)
+
 
 def get_vol():
     available_drives = ['%s:' % d for d in string.ascii_uppercase if os.path.exists('%s:' % d)]
@@ -212,6 +301,11 @@ def collect_artfacts(out, drive,arch,target):
 
 def main():
     varl = yaml_config['all_artifacts']
+
+    if args.processes:
+        GetProcesses()
+    if args.services:
+        GetServices()
     if args.all ==True:
         logging.info("[+] Collecting all the artifact specifided in the YAML File.")
         for  key,vaues in varl.items():
