@@ -13,7 +13,7 @@ import psutil
 import pytsk3
 import wmi
 import hashlib
-
+import io
 
 
 p = psutil.Process(os.getpid())
@@ -50,11 +50,14 @@ global metadata
 metadata = []
 
 def md5(fname):
-    hash_md5 = hashlib.md5()
-    with open(fname, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_md5.update(chunk)
-    return hash_md5.hexdigest()
+    try:
+        hash_md5 = hashlib.md5()
+        with open(fname, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()
+    except IOError as e:
+        return "File Not Found"
 
 def GetProcesses():
     results = []
@@ -121,16 +124,19 @@ def GetProcesses():
 def GetServices():
     results = []
     for service in psutil.win_service_iter():
-        encoded_dict = {}
-        for key,value in service.as_dict().iteritems():
-            if value and isinstance(value,str) and isinstance(key,str):
-                encoded_dict[unicode(key,"utf-8",errors="ignore")] = unicode(value,"utf-8",errors="ignore")
-        results.append(encoded_dict)
+        try:
+            encoded_dict = {}
+            for key,value in service.as_dict().iteritems():
+                if value and isinstance(value,str) and isinstance(key,str):
+                    encoded_dict[unicode(key,"utf-8",errors="ignore")] = unicode(value,"utf-8",errors="ignore")
+            results.append(encoded_dict)
+        except:
+            continue
     result = json.dumps(results)
     with open(os.path.join(ou,"services.json"),"w") as out:
         out.write(result)
 
-
+        
 def get_vol():
     available_drives = ['%s:' % d for d in string.ascii_uppercase if os.path.exists('%s:' % d)]
     xf = platform.architecture()[0]
@@ -320,8 +326,8 @@ def main():
                 logging.info("[+] Collecting the artifact '{}' ".format(key))
                 collect_artfacts(ou,main_drive,arch,key)
     
-    with open(os.path.join(ou,"metadata.csv"),"w") as output:
-        logging.info("[+] Writing artifacts metadata to 'metadata.csv' ")
+    with io.open(os.path.join(ou,"metadata.csv"),"w",encoding='utf8') as output:
+        logging.info("[+] Writing artifacts metadata to 'metadata.csv'")
         for line in metadata:
             if line is not "":
                 output.write(line+"\n")
