@@ -15,30 +15,31 @@ import wmi
 import hashlib
 import io
 
-
+# Set Process Priority to LOW.
 p = psutil.Process(os.getpid())
 p.nice(0x00000040)
-
+# Initilize Logging.
 logging.basicConfig(filename='hoarder.log',mode='w',level=logging.INFO,format='%(asctime)s - %(levelname)s - %(message)s')
-
+# Add the static arguments.
 parser = argparse.ArgumentParser(description="Hoarder is a tool to collect windows artifacts.\n\n")
 parser.add_argument('-a', '--all', action="store_true", help='Get all')
 parser.add_argument('-p', '--processes', action="store_true", help='Collect information about the running processes.')
 parser.add_argument('-s', '--services', action="store_true", help='Collect information about the system services.')
 
 global yaml_config
-
+# Locate and open the configuration file.
 yaml_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "hoarder.yml")
 if os.path.exists(yaml_path):
     yaml_file = open(yaml_path, 'r')
 else:
     print("[*] Could not Find Configurations File 'hoarder.yml'!")
     sys.exit()
-yaml_config = json.loads( json.dumps( yaml.safe_load(yaml_file.read()) ) ) # parse the yaml_file and get the result as json format
+# Load the configuration file as a dictinary.
+yaml_config = json.loads( json.dumps( yaml.safe_load(yaml_file.read()) ) )
 yaml_file.close()
 
 allArtifacts = yaml_config['all_artifacts']
-
+# Dynamically load all of the artifacts from teh configuration file. 
 for key,value in allArtifacts.items():
     parser.add_argument('--'+key, action="store_true", help=allArtifacts[key]['description'])
 
@@ -49,6 +50,7 @@ ou = os.getenv('COMPUTERNAME')
 global metadata
 metadata = []
 
+# This function take's a path to a file as argument then return it's MD% hash.
 def md5(fname):
     try:
         hash_md5 = hashlib.md5()
@@ -59,6 +61,7 @@ def md5(fname):
     except IOError as e:
         return "File Not Found"
 
+# Get information about the running processes then write the JSON formated output to a file called "processes.json"
 def GetProcesses():
     results = []
     attr = ['ppid','pid', 'name', 'username','cmdline','connections','create_time','cwd','exe','nice','open_files']
@@ -67,6 +70,14 @@ def GetProcesses():
         MD5Hash = ""
         process_info = process.as_dict(attrs=attr)
         process_path = process_info.get('exe')
+
+        imports = []
+        try:
+            for dll in process.memory_maps():
+                imports.append(dll.path)
+        except:
+            imports.append("AccessDenied")
+        process_info['imports'] = imports
 
         open_files = process_info['open_files']
         del process_info['open_files']
@@ -120,7 +131,7 @@ def GetProcesses():
     with open(os.path.join(ou,"processes.json"),"w") as out:
         out.write(result)
 
-
+# Write JSON formated output to a file called "services.json"
 def GetServices():
     results = []
     for service in psutil.win_service_iter():
@@ -136,7 +147,9 @@ def GetServices():
     with open(os.path.join(ou,"services.json"),"w") as out:
         out.write(result)
 
-        
+# Return two things:
+# 1. The root volume which contains the windows installation.
+# 2. The OS version (64 or 32).
 def get_vol():
     available_drives = ['%s:' % d for d in string.ascii_uppercase if os.path.exists('%s:' % d)]
     xf = platform.architecture()[0]
@@ -147,7 +160,7 @@ def get_vol():
 
 # Get the drive that contains windows installation and windows architecture. 
 main_drive,arch = get_vol()
-
+# Get's a path for a file as input to get it's metadata and save it to the global list metadata to be writen to a file later. 
 def GetMetaDataForFile(path,artType):
     if os.path.isfile(path):
         status = os.stat(path)
@@ -158,7 +171,7 @@ def GetMetaDataForFile(path,artType):
         metadata.append(pathMetadata)
     else:
         return ""
-
+# Go through a folder recursevlly and calls the function GetMetaDataForFile() for each file it finds.
 def GetMetaData(path,artType):
     if os.path.isdir(path):
         for root, dirs, files in os.walk(path, topdown=False):
@@ -166,17 +179,17 @@ def GetMetaData(path,artType):
                 GetMetaDataForFile(os.path.join(root, name),artType)
     else:
         GetMetaDataForFile(path,artType)
-
+# Copy a directory
 def copyDirectory(src, dest):
     try:
         if os.path.exists(src):
             logging.info("[+] Copying the folder {} ".format(src))
             shutil.copytree(src, dest)
             logging.info("[+] Successfully copied the folder '{}' !".format(src))
-    # Directories are the same
     except:
         logging.warning("[!] Unable to copy the Directory : "+src)
 
+# Gets wildcard paths and return the absulote path.
 def getPaths(path):
     results = []
     foldernames = []
@@ -192,6 +205,7 @@ def getPaths(path):
     results.append(paths)
     return results
 
+# Get's drive litter as input and return it's physical drive.
 def GetPhysicalDisk(driveLetter):
 	for physical_disk in wmi.WMI().Win32_DiskDrive():
 		logical_disks = []
@@ -199,7 +213,7 @@ def GetPhysicalDisk(driveLetter):
 			for logical_disk in partition.associators ("Win32_LogicalDiskToPartition"):
 				if driveLetter.lower() == str(logical_disk.DeviceID).lower():
 					return physical_disk.DeviceID
-
+# Copy any file even if it is locked.
 def justCopy(srcPath,dstPath):
     # Modified version of : https://gist.github.com/glassdfir/7f2a2d381dc17a6a4637
     driveLetter = srcPath.split("\\")[0]
@@ -232,7 +246,7 @@ def justCopy(srcPath,dstPath):
             pass
     logging.warning("[!] Unable to copy the file '{}' ".format(srcPath))
     return False
-
+# Copy a file.
 def CopyFile(src,dest):
     try:
         if os.path.exists(src):
@@ -243,7 +257,7 @@ def CopyFile(src,dest):
             logging.info("[+] Successfully copied the file '{}' !".format(src))
     except:
         logging.warning("[!] Unable to copy the file {} ".format(src))
-
+# The main function responsable for collecting the artifacts.
 def collect_artfacts(out, drive,arch,target):
     allArtifacts = yaml_config['all_artifacts']
     typeOfArt = allArtifacts[target]['type']
@@ -308,11 +322,15 @@ def main():
     varl = yaml_config['all_artifacts']
 
     if args.processes:
+        logging.info("[+] Collecting Processes.")
         GetProcesses()
     if args.services:
+        logging.info("[+] Collecting Services.")
         GetServices()
     if args.all ==True:
+        logging.info("[+] Collecting Processes.")
         GetProcesses()
+        logging.info("[+] Collecting Services.")
         GetServices()
         logging.info("[+] Collecting all the artifact specifided in the YAML File.")
         for  key,vaues in varl.items():
