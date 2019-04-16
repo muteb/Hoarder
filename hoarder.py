@@ -71,6 +71,10 @@ def GetProcesses():
         process_info = process.as_dict(attrs=attr)
         process_path = process_info.get('exe')
 
+        date = datetime.fromtimestamp(process.create_time())
+        dateAndTime = date.strftime('%Y-%m-%d T%H:%M:%S')
+        process_info['@timestamp'] = dateAndTime
+
         imports = []
         try:
             for dll in process.memory_maps():
