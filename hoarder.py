@@ -59,6 +59,7 @@ def md5(fname):
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
     except IOError as e:
+        logging.error(e)
         return "File Not Found"
 
 # Get information about the running processes then write the JSON formated output to a file called "processes.json"
@@ -79,7 +80,8 @@ def GetProcesses():
         try:
             for dll in process.memory_maps():
                 imports.append(dll.path)
-        except:
+        except Exception as e:
+            logging.error(e)
             imports.append("AccessDenied")
         process_info['imports'] = imports
 
@@ -145,8 +147,8 @@ def GetServices():
                 if value and isinstance(value,str) and isinstance(key,str):
                     encoded_dict[unicode(key,"utf-8",errors="ignore")] = unicode(value,"utf-8",errors="ignore")
             results.append(encoded_dict)
-        except:
-            continue
+        except Exception as e:
+            logging.error(e)
     result = json.dumps(results)
     with open(os.path.join(ou,"services.json"),"w") as out:
         out.write(result)
@@ -190,7 +192,8 @@ def copyDirectory(src, dest):
             logging.info("[+] Copying the folder {} ".format(src))
             shutil.copytree(src, dest)
             logging.info("[+] Successfully copied the folder '{}' !".format(src))
-    except:
+    except Exception as e:
+        logging.error(e)
         logging.warning("[!] Unable to copy the Directory : "+src)
 
 # Gets wildcard paths and return the absulote path.
@@ -235,19 +238,20 @@ def justCopy(srcPath,dstPath):
             if not os.path.exists(FinalOutDir):
                 os.makedirs(FinalOutDir)
             FinalFilePath = os.path.join(FinalOutDir, OutFileName)
-            OutFile = open(FinalFilePath, 'w')
+            OutFile = open(FinalFilePath, 'wb')
             if fileobject.info.meta.size > 0:
                 logging.info("[+] Copying the file {} ".format(srcPath))
                 filedata = fileobject.read_random(0,fileobject.info.meta.size)
                 logging.info("[+] Successfully copied the file '{}' !".format(srcPath))
             else:
+                filedata=b""
                 logging.warning("[!] Unable to copy the file {} . The file is Empty!".format(srcPath))
             OutFile.write(filedata)
             OutFile.close
 
             return True
-        except:
-            pass
+        except Exception as e:
+            logging.error(e)
     logging.warning("[!] Unable to copy the file '{}' ".format(srcPath))
     return False
 # Copy a file.
@@ -259,8 +263,9 @@ def CopyFile(src,dest):
             logging.info("[+] Copying the file {} ".format(src))
             shutil.copy(src,dest)
             logging.info("[+] Successfully copied the file '{}' !".format(src))
-    except:
+    except Exception as e:
         logging.warning("[!] Unable to copy the file {} ".format(src))
+        logging.error(e)
 # The main function responsable for collecting the artifacts.
 def collect_artfacts(out, drive,arch,target):
     allArtifacts = yaml_config['all_artifacts']
