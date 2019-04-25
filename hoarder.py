@@ -168,15 +168,19 @@ def get_vol():
 main_drive,arch = get_vol()
 # Get's a path for a file as input to get it's metadata and save it to the global list metadata to be writen to a file later. 
 def GetMetaDataForFile(path,artType):
-    if os.path.isfile(path):
-        status = os.stat(path)
-        ctime = datetime.utcfromtimestamp(status.st_ctime).strftime('%Y-%m-%d %H:%M:%S')
-        mtime = datetime.utcfromtimestamp(status.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
-        atime = datetime.utcfromtimestamp(status.st_atime).strftime('%Y-%m-%d %H:%M:%S')
-        pathMetadata = "\""+path+"\","+str(status.st_size)+","+ctime+","+mtime+","+atime+","+artType
-        metadata.append(pathMetadata)
-    else:
-        return ""
+    try:
+        if os.path.isfile(path):
+            status = os.stat(path)
+            ctime = datetime.utcfromtimestamp(status.st_ctime).strftime('%Y-%m-%d %H:%M:%S')
+            mtime = datetime.utcfromtimestamp(status.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+            atime = datetime.utcfromtimestamp(status.st_atime).strftime('%Y-%m-%d %H:%M:%S')
+            pathMetadata = "\""+path+"\","+str(status.st_size)+","+ctime+","+mtime+","+atime+","+artType
+            metadata.append(pathMetadata)
+        else:
+            return ""
+    except Exception as e:
+        logging.error(e)
+    return ""
 # Go through a folder recursevlly and calls the function GetMetaDataForFile() for each file it finds.
 def GetMetaData(path,artType):
     if os.path.isdir(path):
