@@ -1,0 +1,5 @@
+pyyaml
+psutil
+pytsk3
+wmi
+pywin32

@@ -376,4 +376,7 @@ if __name__ == '__main__':
     shutil.move("hoarder.log",ou)
     shutil.make_archive(ou, 'zip', ou)    
     if os.path.exists(ou):
-        shutil.rmtree(ou)
+        try:
+            shutil.rmtree(ou)
+        except Exception as e:
+            logging.error(e)
