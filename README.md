@@ -11,7 +11,7 @@ To install Hoarder  dependences run the following command on a privileged termin
 
 Make sure that `hoarder.yml` is on the same directory as the script. `hoarder.yml` is YAML file that contains artifacts. Hoarder will read this file and generate argument at runtime (try `python hoarder.py -h`). The following is the list of argument :
 
-```python
+```
 	usage: hoarder.py [-h] [-a] [-p] [-s] [--PowerShellHistory] [--Config]
                   [--WMITraceLogs] [--Firwall] [--Events] [--usrclass] [--BMC]
                   [--Ntuser] [--ChromeData] [--SRUM] [--Recent] [--Ntfs]
