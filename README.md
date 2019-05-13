@@ -82,6 +82,6 @@ applications:
 * para : The file name/s. it could be a single string or a list as the example above.
 * type : The time of the artifact. is it a file or folder.
 * copyType : Hoarder support two types of coping a file, normal and justCopy.
-  * normal : a normal copy to the file. This type should be used of the file is not locked and it could be copied easily.
+  * normal : a normal copy to the file. This type should be used if the file is not locked and it could be copied normally.
   * justCopy : This type of coping is used to copy files in use (locked) which can not be copied using the normal method such as $MFT and Amcache.hve
 * description : a description  about the artifact. This key is used in hoarder command line to show some information about the artifact.
