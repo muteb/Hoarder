@@ -24,6 +24,7 @@ logging.basicConfig(filename='hoarder.log',mode='w',level=logging.INFO,format='%
 parser = argparse.ArgumentParser(description="Hoarder is a tool to collect windows artifacts.\n\n")
 parser.add_argument('-a', '--all', action="store_true", help='Get all')
 parser.add_argument('-p', '--processes', action="store_true", help='Collect information about the running processes.')
+parser.add_argument('-v', '--volume', help='Select a volume letter to collect artifacts from (By default hoarder will automatically look for the root volume)')
 parser.add_argument('-s', '--services', action="store_true", help='Collect information about the system services.')
 
 global yaml_config
@@ -159,10 +160,13 @@ def GetServices():
 def get_vol():
     available_drives = ['%s:' % d for d in string.ascii_uppercase if os.path.exists('%s:' % d)]
     xf = platform.architecture()[0]
-    for drive in available_drives:
-        dee = os.listdir(drive+"\\")
-        if "Windows" in dee and "Users" in dee:
-            return drive,xf
+    if args.volume:
+        return args.volume+":",xf
+    else:
+        for drive in available_drives:
+            dee = os.listdir(drive+"\\")
+            if "Windows" in dee and "Users" in dee:
+                return drive,xf
 
 # Get the drive that contains windows installation and windows architecture. 
 main_drive,arch = get_vol()
@@ -193,9 +197,11 @@ def GetMetaData(path,artType):
 def copyDirectory(src, dest):
     try:
         if os.path.exists(src):
-            logging.info("[+] Copying the folder {} ".format(src))
+            logging.info("[+] Copying the folder \"{}\" ".format(src))
             shutil.copytree(src, dest)
-            logging.info("[+] Successfully copied the folder '{}' !".format(src))
+            logging.info("[+] Successfully copied the folder \"{}\" !".format(src))
+        else:
+            logging.warning("[+] Folder not Found \"{}\" ".format(src))
     except Exception as e:
         logging.error(e)
         logging.warning("[!] Unable to copy the Directory : "+src)
@@ -212,8 +218,13 @@ def getPaths(path):
     else:
         foldernames.append(path[path.rindex("\\")+1::])
         paths.append(path)
-    results.append(foldernames)
-    results.append(paths)
+    
+    if  "*" in path.split("\\")[-1] or "?" in path.split("\\")[-1]:
+        results.append(["" for i in range(len(paths))])
+        results.append(paths)
+    else:
+        results.append(foldernames)
+        results.append(paths)
     return results
 
 # Get's drive litter as input and return it's physical drive.
@@ -244,19 +255,19 @@ def justCopy(srcPath,dstPath):
             FinalFilePath = os.path.join(FinalOutDir, OutFileName)
             OutFile = open(FinalFilePath, 'wb')
             if fileobject.info.meta.size > 0:
-                logging.info("[+] Copying the file {} ".format(srcPath))
+                logging.info("[+] Copying the file \"{}\" ".format(srcPath))
                 filedata = fileobject.read_random(0,fileobject.info.meta.size)
                 logging.info("[+] Successfully copied the file '{}' !".format(srcPath))
             else:
                 filedata=b""
-                logging.warning("[!] Unable to copy the file {} . The file is Empty!".format(srcPath))
+                logging.warning("[!] Unable to copy the file \"{}\" . The file is Not Found / Empty!".format(srcPath))
             OutFile.write(filedata)
             OutFile.close
 
             return True
         except Exception as e:
             logging.error(e)
-    logging.warning("[!] Unable to copy the file '{}' ".format(srcPath))
+    logging.warning("[!] Unable to copy the file \"{}\" ".format(srcPath))
     return False
 # Copy a file.
 def CopyFile(src,dest):
@@ -264,11 +275,13 @@ def CopyFile(src,dest):
         if os.path.exists(src):
             if not os.path.exists(dest):
                 os.makedirs(dest)
-            logging.info("[+] Copying the file {} ".format(src))
+            logging.info("[+] Copying the file \"{}\" ".format(src))
             shutil.copy(src,dest)
-            logging.info("[+] Successfully copied the file '{}' !".format(src))
+            logging.info("[+] Successfully copied the file \"{}\" !".format(src))
+        else:
+            logging.warning("[+] File not Found \"{}\" ".format(src))
     except Exception as e:
-        logging.warning("[!] Unable to copy the file {} ".format(src))
+        logging.warning("[!] Unable to copy the file \"{}\" ".format(src))
         logging.error(e)
 # The main function responsable for collecting the artifacts.
 def collect_artfacts(out, drive,arch,target):
@@ -328,6 +341,8 @@ def collect_artfacts(out, drive,arch,target):
                     elif copyType == 'justCopy':
                         #justCopy(src,output,True)
                         raise ValueError("justCopy for folders is not supported yet (Sorry !)")
+            else:
+                logging.warning("[+] Folder not Found \"{}\" ".format(src))
         else:
             raise ValueError("YAML formate Error. 'type' should be only file,folder or dir")
 
