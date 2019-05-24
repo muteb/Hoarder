@@ -68,7 +68,7 @@ applications:
       path32: '\Windows\AppCompat\Programs\'
       path64: '\Windows\AppCompat\Programs\'
       para: 
-      - Amcache.hve
+      - Amcache.hve*
       - RecentFileCache.bcf
       type: 'file'
       copyType: 'justCopy'
