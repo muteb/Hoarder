@@ -229,46 +229,42 @@ def getPaths(path):
 
 # Get's drive litter as input and return it's physical drive.
 def GetPhysicalDisk(driveLetter):
-	for physical_disk in wmi.WMI().Win32_DiskDrive():
-		logical_disks = []
-		for partition in physical_disk.associators ("Win32_DiskDriveToDiskPartition"):
-			for logical_disk in partition.associators ("Win32_LogicalDiskToPartition"):
-				if driveLetter.lower() == str(logical_disk.DeviceID).lower():
-					return physical_disk.DeviceID
-# Copy any file even if it is locked.
-def justCopy(srcPath,dstPath):
-    # Modified version of : https://gist.github.com/glassdfir/7f2a2d381dc17a6a4637
-    driveLetter = srcPath.split("\\")[0]
-    imagefile = GetPhysicalDisk(driveLetter)
-    imagehandle = pytsk3.Img_Info(imagefile)
-    partitionTable = pytsk3.Volume_Info(imagehandle)
+    for physical_disk in wmi.WMI().Win32_DiskDrive():
+        logical_disks = []
+        for partition in physical_disk.associators ("Win32_DiskDriveToDiskPartition"):
+            for logical_disk in partition.associators ("Win32_LogicalDiskToPartition"):
+                if driveLetter.lower() == str(logical_disk.DeviceID).lower():
+                    return physical_disk.DeviceID,partition.StartingOffset
 
-    for partition in partitionTable:
-        try:
-            filesystemObject = pytsk3.FS_Info(imagehandle, offset=(partition.start*512))
-            parsedname = os.path.abspath(srcPath).replace(driveLetter,"").replace("\\","/")
-            fileobject = filesystemObject.open(parsedname)
-            OutFileName = fileobject.info.name.name
-            FinalOutDir = dstPath
-            if not os.path.exists(FinalOutDir):
-                os.makedirs(FinalOutDir)
-            FinalFilePath = os.path.join(FinalOutDir, OutFileName)
-            OutFile = open(FinalFilePath, 'wb')
-            if fileobject.info.meta.size > 0:
+def justCopy(srcPath,dstPath):
+    try:
+        driveLetter = srcPath.split("\\")[0]
+        imagefile,offset = GetPhysicalDisk(driveLetter)
+        imagehandle = pytsk3.Img_Info(imagefile)
+        drive = pytsk3.FS_Info(imagehandle, offset=int(offset))
+
+        parsedname = os.path.abspath(srcPath).replace(driveLetter,"").replace("\\","/")
+        fileobject = drive.open(parsedname)
+        OutFileName = fileobject.info.name.name
+
+        if not os.path.exists(dstPath):
+                os.makedirs(dstPath)
+        
+        FinalFilePath = os.path.join(dstPath, OutFileName)
+        OutFile = open(FinalFilePath, 'wb')
+        if fileobject.info.meta.size > 0:
                 logging.info("[+] Copying the file \"{}\" ".format(srcPath))
                 filedata = fileobject.read_random(0,fileobject.info.meta.size)
+                OutFile.write(filedata)
+                OutFile.close()
                 logging.info("[+] Successfully copied the file '{}' !".format(srcPath))
-            else:
-                filedata=b""
-                logging.warning("[!] Unable to copy the file \"{}\" . The file is Not Found / Empty!".format(srcPath))
-            OutFile.write(filedata)
-            OutFile.close
+        else:
+            filedata=b""
+            logging.warning("[!] Unable to copy the file \"{}\" . The file is Not Found / Empty!".format(srcPath))
+    except Exception as e:
+        logging.error("[!] Unable to copy the file \"{}\" .".format(srcPath))
+        logging.error(e)
 
-            return True
-        except Exception as e:
-            logging.error(e)
-    logging.warning("[!] Unable to copy the file \"{}\" ".format(srcPath))
-    return False
 # Copy a file.
 def CopyFile(src,dest):
     try:

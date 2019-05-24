@@ -137,10 +137,10 @@ all_artifacts:
   
   RecycleBin: 
       output: 'RecycleBin'
-      path32: '\$Recycle.Bin\'
-      path64: '\$Recycle.Bin\'
-      para: ''
-      type: 'folder'
+      path32: '\$Recycle.Bin\*'
+      path64: '\$Recycle.Bin\*'
+      para: '$I*'
+      type: 'file'
       copyType: 'normal'
       description: 'RecycleBin Files'
   
