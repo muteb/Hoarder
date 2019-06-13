@@ -12,12 +12,12 @@ To install Hoarder  dependences run the following command on a privileged termin
 Make sure that `hoarder.yml` is on the same directory as the script. `hoarder.yml` is YAML file that contains artifacts. Hoarder will read this file and generate argument at runtime (try `python hoarder.py -h`). The following is the list of argument :
 
 ```
-	usage: hoarder.py [-h] [-a] [-p] [-s] [--PowerShellHistory] [--Config]
-                  [--WMITraceLogs] [--Firwall] [--Events] [--usrclass] [--BMC]
-                  [--Ntuser] [--ChromeData] [--SRUM] [--Recent] [--Ntfs]
-                  [--FirefoxData] [--applications] [--WMI] [--scheduled_task]
-                  [--IECookies] [--IEData] [--Startup] [--prefetch]
-                  [--RecycleBin] [--WindowsIndexSearch]
+	usage: hoarder.py [-h] [-a] [-p] [-v VOLUME] [-s] [--BMC] [--Ntfs]
+                  [--PowerShellHistory] [--Jump_List] [--Ntuser] [--SRUM]
+                  [--Startup] [--BrowserHistory] [--Events] [--CCM]
+                  [--applications] [--WMI] [--prefetch] [--WMITraceLogs]
+                  [--RecycleBin] [--Firwall] [--WindowsIndexSearch] [--Config]
+                  [--scheduled_task] [--usrclass] [--Recent]
 
 Hoarder is a tool to collect windows artifacts.
 
@@ -25,29 +25,32 @@ optional arguments:
   -h, --help            show this help message and exit
   -a, --all             Get all
   -p, --processes       Collect information about the running processes.
+  -v VOLUME, --volume VOLUME
+                        Select a volume letter to collect artifacts from (By
+                        default hoarder will automatically look for the root
+                        volume)
   -s, --services        Collect information about the system services.
-  --PowerShellHistory   PowerShell history for all the users
-  --Config              System hives
-  --WMITraceLogs        WMI Trace Logs
-  --Firwall             Firewall Logs
-  --Events              Windows event logs
-  --usrclass            UserClass.dat file for all the users
   --BMC                 BMC files for all the users
-  --Ntuser              All users hives
-  --ChromeData          Chrome Data
-  --SRUM                SRUM folder
-  --Recent              Recently opened files
   --Ntfs                $MFT file
-  --FirefoxData         Firefox Data
+  --PowerShellHistory   PowerShell history for all the users
+  --Jump_List           JumpList files
+  --Ntuser              All users hives
+  --SRUM                SRUM folder
+  --Startup             Startup info
+  --BrowserHistory      BrowserHistory Data
+  --Events              Windows event logs
+  --CCM                 CCM Logs
   --applications        Amcache files
   --WMI                 WMI OBJECTS.DATA file
-  --scheduled_task      Scheduled Tasks files
-  --IECookies           Internet Explorer Cookies
-  --IEData              Internet Explorer Data
-  --Startup             Startup info
   --prefetch            Prefetch files
+  --WMITraceLogs        WMI Trace Logs
   --RecycleBin          RecycleBin Files
+  --Firwall             Firewall Logs
   --WindowsIndexSearch  Windows Search artifacts
+  --Config              System hives
+  --scheduled_task      Scheduled Tasks files
+  --usrclass            UserClass.dat file for all the users
+  --Recent              Recently opened files
 ```
 
 #### Example
