@@ -35,6 +35,19 @@ all_artifacts:
       type: 'folder'
       copyType: 'normal'
       description: 'Firewall Logs'
+  CCM:
+      output: 'ccm_logs'
+      path32: 
+      - '\syswow64\ccm\logs\'
+      - '\Windows\ccm\logs\'
+      path64: 
+      - '\system32\ccm\logs\'
+      - '\Windows\ccm\logs\'
+      para: ''
+      type: 'folder'
+      copyType: 'normal'
+      description: 'CCM Logs'
+      
   WindowsIndexSearch:
       output: 'WindowsIndexSearch'
       path32: '\programdata\microsoft\search\data\applications\windows\'
@@ -89,7 +102,7 @@ all_artifacts:
       output: 'Ntuser'
       path32: '\Users\*'
       path64: '\Users\*'
-      para: 'NTUSER.DAT'
+      para: 'NTUSER.DAT*'
       type: 'file'
       copyType: 'justCopy'
       description: 'All users hives'
@@ -169,6 +182,18 @@ all_artifacts:
       type: 'folder'
       copyType: 'normal'
       description: 'Scheduled Tasks files'
+  Jump_List:
+      output: 'Jump_List'
+      path32: 
+      - '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations'
+      - '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\CustomDestinations'
+      path64: 
+      - '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations'
+      - '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\CustomDestinations'
+      para: ''
+      type: 'folder'
+      copyType: 'normal'
+      description: 'JumpList files'
   BMC:
     output: 'BMC'
     path32: '\Users\*\AppData\Local\Microsoft\Terminal Server Client\Cache'
@@ -193,47 +218,32 @@ all_artifacts:
     type: 'folder'
     copyType: 'normal'
     description: 'WMI Trace Logs'
-  IEData:
-    output: 'IEData'
-    path32: '\Users\*\AppData\Local\Microsoft\Windows\WebCache\'
-    path64: '\Users\*\AppData\Local\Microsoft\Windows\WebCache\'
-    para: 'WebCacheV01.dat'
-    type: 'file'
-    copyType: 'justCopy'
-    description: 'Internet Explorer Data'
-  IECookies:
-    output: 'IECookies'
-    path32: '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\'
-    path64: '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\'
-    para: ''
-    type: 'folder'
-    copyType: 'justCopy'
-    description: 'Internet Explorer Cookies'
-  ChromeData:
-    output: 'ChromeData'
+  
+  BrowserHistory:
+    output: 'BrowserHistory'
     path32: 
     - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default'
     - '\Users\*\AppData\local\Google\Chrome\User Data\Default'
+    - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\'
+    - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\'
+    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\*'
     path64: 
     - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default'
     - '\Users\*\AppData\local\Google\Chrome\User Data\Default'
+    - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\'
+    - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\'
+    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\*'
     para: 
     - 'History'
     - 'Cache'
     - 'Cookies'
-    type: 'file'
-    copyType: 'justCopy'
-    description: 'Chrome Data'
-  FirefoxData:
-    output: 'FirefoxData'
-    path32: '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\*'
-    path64: '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\*'
-    para: 
+    - 'WebCacheV01.dat'
     - 'places.sqlite'
     - 'cookies.sqlite'
     type: 'file'
     copyType: 'justCopy'
-    description: 'Firefox Data'
+    description: 'BrowserHistory Data'
+
 
 
 

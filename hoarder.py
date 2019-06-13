@@ -14,6 +14,7 @@ import pytsk3
 import wmi
 import hashlib
 import io
+import ctypes
 
 # Set Process Priority to LOW.
 p = psutil.Process(os.getpid())
@@ -62,6 +63,13 @@ def md5(fname):
     except IOError as e:
         logging.error(e)
         return "File Not Found"
+
+# Check if the script is runned as Administrator
+def is_admin():
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False
 
 # Get information about the running processes then write the JSON formated output to a file called "processes.json"
 def GetProcesses():
@@ -208,24 +216,8 @@ def copyDirectory(src, dest):
 
 # Gets wildcard paths and return the absulote path.
 def getPaths(path):
-    results = []
-    foldernames = []
-    paths = []
-    if "*" in path or "?" in path:
-        for absPath in glob.glob(path):
-            foldernames.append(absPath[path.find("*"):absPath.find("\\",path.find("*"))])
-            paths.append(absPath)
-    else:
-        foldernames.append(path[path.rindex("\\")+1::])
-        paths.append(path)
-    
-    if  "*" in path.split("\\")[-1] or "?" in path.split("\\")[-1]:
-        results.append(["" for i in range(len(paths))])
-        results.append(paths)
-    else:
-        results.append(foldernames)
-        results.append(paths)
-    return results
+    paths = glob.glob(path)
+    return paths
 
 # Get's drive litter as input and return it's physical drive.
 def GetPhysicalDisk(driveLetter):
@@ -309,36 +301,32 @@ def collect_artfacts(out, drive,arch,target):
             srcs.append(os.path.join(drive,paths,paras))
 
     for src in srcs:
+        paths = getPaths(src)
         if typeOfArt == "file":
-            if "*" in src or "?" in src:
-                allPaths = getPaths(src)
-                foldernames = allPaths[0]
-                paths = allPaths[1]
-                for i in range(len(foldernames)):
-                    foldername = foldernames[i]
-                    path = paths[i]
-                    GetMetaData(path,target)
-                    if copyType == 'justCopy':
-                        justCopy(path,os.path.join(output,foldername))           
-                    elif copyType == 'normal':
-                        CopyFile(path,os.path.join(output,foldername))
-            else:
-                GetMetaData(src,target)
+            for path in paths:
+                GetMetaData(path,target)
+                outPath = os.path.join(output,path[path.index("\\")+1:path.rindex("\\")])
+                if not os.path.exists(outPath):
+                    os.makedirs(outPath)
                 if copyType == 'justCopy':
-                    justCopy(src,output)
+                    justCopy(path,os.path.join(output,outPath))           
                 elif copyType == 'normal':
-                    CopyFile(src,output)
+                    CopyFile(path,os.path.join(output,outPath))
         elif typeOfArt == "folder" or typeOfArt == "dir":
-            if os.path.exists(src):
-                GetMetaData(src,target)
-                if not len(os.listdir(src)) == 0:
-                    if copyType == 'normal':
-                        copyDirectory(src,output)
-                    elif copyType == 'justCopy':
-                        #justCopy(src,output,True)
-                        raise ValueError("justCopy for folders is not supported yet (Sorry !)")
-            else:
-                logging.warning("[+] Folder not Found \"{}\" ".format(src))
+            for path in paths:
+                if os.path.exists(path):
+                    outPath = os.path.join(output,path[path.index("\\")+1:path.rindex("\\")])
+                    GetMetaData(path,target)
+                    if not len(os.listdir(path)) == 0:
+                        if copyType == 'normal':
+                            copyDirectory(path,outPath)
+                        elif copyType == 'justCopy':
+                            #justCopy(src,output,True)
+                            raise ValueError("justCopy for folders is not supported yet (Sorry !)")
+                    else:
+                        logging.warning("[+] Folder is empty \"{}\" ".format(path))
+                else:   
+                    logging.warning("[+] Folder not Found \"{}\" ".format(path))
         else:
             raise ValueError("YAML formate Error. 'type' should be only file,folder or dir")
 
@@ -376,18 +364,22 @@ def main():
 
 
 if __name__ == '__main__':
-    logging.info("[+] Hoarder Started!")
-    if os.path.exists(ou):
-        shutil.rmtree(ou)
-    os.mkdir(ou)
-    main()  
-    logging.info("[+] Collecting artifacts finished!")
-    logging.info("[+] Adding the output folder to archive.")
-    logging.shutdown()
-    shutil.move("hoarder.log",ou)
-    shutil.make_archive(ou, 'zip', ou)    
-    if os.path.exists(ou):
-        try:
+    if is_admin():
+        logging.info("[+] Hoarder Started!")
+        if os.path.exists(ou):
             shutil.rmtree(ou)
-        except Exception as e:
-            logging.error(e)
+        os.mkdir(ou)
+        main()  
+        logging.info("[+] Collecting artifacts finished!")
+        logging.info("[+] Adding the output folder to archive.")
+        logging.shutdown()
+        shutil.move("hoarder.log",ou)
+        shutil.make_archive(ou, 'zip', ou)    
+        if os.path.exists(ou):
+            try:
+                shutil.rmtree(ou)
+            except Exception as e:
+                logging.error(e)
+    else:
+        # Re-run the program with admin rights
+        ctypes.windll.shell32.ShellExecuteW(None, u"runas", unicode(sys.executable), unicode(" ".join(sys.argv)), "", 1)
