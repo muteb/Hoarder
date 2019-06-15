@@ -23,7 +23,7 @@ p.nice(0x00000040)
 logging.basicConfig(filename='hoarder.log',mode='w',level=logging.INFO,format='%(asctime)s - %(levelname)s - %(message)s')
 # Add the static arguments.
 parser = argparse.ArgumentParser(description="Hoarder is a tool to collect windows artifacts.\n\n")
-parser.add_argument('-a', '--all', action="store_true", help='Get all')
+parser.add_argument('-a', '--all', action="store_true", help='Get all (Default)', default=True)
 parser.add_argument('-p', '--processes', action="store_true", help='Collect information about the running processes.')
 parser.add_argument('-v', '--volume', help='Select a volume letter to collect artifacts from (By default hoarder will automatically look for the root volume)')
 parser.add_argument('-s', '--services', action="store_true", help='Collect information about the system services.')

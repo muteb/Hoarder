@@ -23,7 +23,7 @@ Hoarder is a tool to collect windows artifacts.
 
 optional arguments:
   -h, --help            show this help message and exit
-  -a, --all             Get all
+  -a, --all             Get all (Default)
   -p, --processes       Collect information about the running processes.
   -v VOLUME, --volume VOLUME
                         Select a volume letter to collect artifacts from (By
