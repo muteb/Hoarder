@@ -185,11 +185,9 @@ all_artifacts:
   Jump_List:
       output: 'Jump_List'
       path32: 
-      - '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations'
-      - '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\CustomDestinations'
+      - '\Users\*\AppData\Roaming\Microsoft\Windows\Recent'
       path64: 
-      - '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations'
-      - '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\CustomDestinations'
+      - '\Users\*\AppData\Roaming\Microsoft\Windows\Recent'
       para: ''
       type: 'folder'
       copyType: 'normal'
