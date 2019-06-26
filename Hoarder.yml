@@ -242,6 +242,15 @@ all_artifacts:
     copyType: 'justCopy'
     description: 'BrowserHistory Data'
 
+  WERFiles:
+    output: 'WER'
+    path32: '\ProgramData\Microsoft\Windows\WER\ReportArchive'
+    path64: '\ProgramData\Microsoft\Windows\WER\ReportArchive'
+    para: ''
+    type: 'folder'
+    copyType: 'normal'
+    description: 'Windows Error Reporting Files'
+
 
 
 

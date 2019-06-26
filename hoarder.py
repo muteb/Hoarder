@@ -15,15 +15,16 @@ import wmi
 import hashlib
 import io
 import ctypes
+import subprocess
 
 # Set Process Priority to LOW.
 p = psutil.Process(os.getpid())
 p.nice(0x00000040)
 # Initilize Logging.
-logging.basicConfig(filename='hoarder.log',mode='w',level=logging.INFO,format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='hoarder.log',filemode='w',level=logging.INFO,format='%(asctime)s - %(levelname)s - %(message)s')
 # Add the static arguments.
 parser = argparse.ArgumentParser(description="Hoarder is a tool to collect windows artifacts.\n\n")
-parser.add_argument('-a', '--all', action="store_true", help='Get all (Default)', default=True)
+parser.add_argument('-a', '--all', action="store_true", help='Get all (Default)')
 parser.add_argument('-p', '--processes', action="store_true", help='Collect information about the running processes.')
 parser.add_argument('-v', '--volume', help='Select a volume letter to collect artifacts from (By default hoarder will automatically look for the root volume)')
 parser.add_argument('-s', '--services', action="store_true", help='Collect information about the system services.')
@@ -61,7 +62,7 @@ def md5(fname):
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
     except IOError as e:
-        logging.error(e)
+        logging.error("[X] Exception : ", exc_info=True)
         return "File Not Found"
 
 # Check if the script is runned as Administrator
@@ -73,94 +74,101 @@ def is_admin():
 
 # Get information about the running processes then write the JSON formated output to a file called "processes.json"
 def GetProcesses():
-    results = []
-    attr = ['ppid','pid', 'name', 'username','cmdline','connections','create_time','cwd','exe','nice','open_files']
-    # Removed : environ,threads,cpu_percent
-    for process in psutil.process_iter():
-        MD5Hash = ""
-        process_info = process.as_dict(attrs=attr)
-        process_path = process_info.get('exe')
+    try:
+        results = []
+        attr = ['ppid','pid', 'name', 'username','cmdline','connections','create_time','cwd','exe','nice','open_files']
+        # Removed : environ,threads,cpu_percent
+        for process in psutil.process_iter():
+            MD5Hash = ""
+            process_info = process.as_dict(attrs=attr)
+            process_path = process_info.get('exe')
 
-        date = datetime.fromtimestamp(process.create_time())
-        dateAndTime = date.strftime('%Y-%m-%d T%H:%M:%S')
-        process_info['@timestamp'] = dateAndTime
+            date = datetime.fromtimestamp(process.create_time())
+            dateAndTime = date.strftime('%Y-%m-%d T%H:%M:%S')
+            process_info['@timestamp'] = dateAndTime
 
-        imports = []
-        try:
-            for dll in process.memory_maps():
-                imports.append(dll.path)
-        except Exception as e:
-            logging.error(e)
-            imports.append("AccessDenied")
-        process_info['imports'] = imports
+            imports = []
+            try:
+                for dll in process.memory_maps():
+                    imports.append(dll.path)
+            except Exception as e:
+                logging.error("[X] Exception : ", exc_info=True)
+                imports.append("AccessDenied")
+            process_info['imports'] = imports
 
-        open_files = process_info['open_files']
-        del process_info['open_files']
-        fixed_open_files = []
+            open_files = process_info['open_files']
+            del process_info['open_files']
+            fixed_open_files = []
 
-        if open_files:
-            for file_info in open_files:
-                fixed_open_files.append(file_info[0])
-        else:
-            process_info['open_files'] = []
-            
-            
-        process_info['open_files'] = fixed_open_files
-        
-        cmdline = process_info['cmdline']
-        del process_info['cmdline']
-        fixed_cmdline = ""
-        if  cmdline:
-            fixed_cmdline = " ".join(cmdline)
-            process_info['cmdline'] = fixed_cmdline
-        else:
-            process_info['cmdline'] = ""
-        
-        connections = process_info['connections']
-        fixed_connections = []
-        del process_info['connections']
-
-        if connections:
-            for connection in connections:
-                connection_ = {}
-                connection_['local_ip'] = connection.laddr.ip
-                connection_['local_port'] = connection.laddr.port
-                connection_['protocole'] = "TCP" if connection.type == 1 else "UDP"
-                if connection.raddr:
-                    connection_['remote_ip'] = connection.raddr.ip
-                    connection_['remote_port'] = connection.raddr.port
-                connection_['status'] = connection.status
-                fixed_connections.append(connection_)
+            if open_files:
+                for file_info in open_files:
+                    fixed_open_files.append(file_info[0])
+            else:
+                process_info['open_files'] = []
                 
-            process_info['connections'] = fixed_connections
-        else:
-            process_info['connections'] = []
+                
+            process_info['open_files'] = fixed_open_files
+            
+            cmdline = process_info['cmdline']
+            del process_info['cmdline']
+            fixed_cmdline = ""
+            if  cmdline:
+                fixed_cmdline = " ".join(cmdline)
+                process_info['cmdline'] = fixed_cmdline
+            else:
+                process_info['cmdline'] = ""
+            
+            connections = process_info['connections']
+            fixed_connections = []
+            del process_info['connections']
 
-        if process_path:
-            MD5Hash = md5(process_path)
-        process_info['md5'] = MD5Hash
-        results.append(process_info)
+            if connections:
+                for connection in connections:
+                    connection_ = {}
+                    connection_['local_ip'] = connection.laddr.ip
+                    connection_['local_port'] = connection.laddr.port
+                    connection_['protocole'] = "TCP" if connection.type == 1 else "UDP"
+                    if connection.raddr:
+                        connection_['remote_ip'] = connection.raddr.ip
+                        connection_['remote_port'] = connection.raddr.port
+                    connection_['status'] = connection.status
+                    fixed_connections.append(connection_)
+                    
+                process_info['connections'] = fixed_connections
+            else:
+                process_info['connections'] = []
 
-    result = json.dumps(results)
+            if process_path:
+                MD5Hash = md5(process_path)
+            process_info['md5'] = MD5Hash
+            results.append(process_info)
 
-    with open(os.path.join(ou,"processes.json"),"w") as out:
-        out.write(result)
+        result = json.dumps(results)
+
+        with open(os.path.join(ou,"processes.json"),"w") as out:
+            out.write(result)
+    except Exception as e:
+        logging.error("[X] Collecting Processes Failed !")
+        logging.error("[X] Exception : ", exc_info=True)
 
 # Write JSON formated output to a file called "services.json"
 def GetServices():
-    results = []
-    for service in psutil.win_service_iter():
-        try:
-            encoded_dict = {}
-            for key,value in service.as_dict().iteritems():
-                if value and isinstance(value,str) and isinstance(key,str):
-                    encoded_dict[unicode(key,"utf-8",errors="ignore")] = unicode(value,"utf-8",errors="ignore")
-            results.append(encoded_dict)
-        except Exception as e:
-            logging.error(e)
-    result = json.dumps(results)
-    with open(os.path.join(ou,"services.json"),"w") as out:
-        out.write(result)
+    try:
+        results = []
+        for service in psutil.win_service_iter():
+            try:
+                encoded_dict = {}
+                for key,value in service.as_dict().iteritems():
+                    if value and isinstance(value,str) and isinstance(key,str):
+                        encoded_dict[unicode(key,"utf-8",errors="ignore")] = unicode(value,"utf-8",errors="ignore")
+                results.append(encoded_dict)
+            except Exception as e:
+                logging.error("[X] Exception : ", exc_info=True)
+        result = json.dumps(results)
+        with open(os.path.join(ou,"services.json"),"w") as out:
+            out.write(result)
+    except Exception as e:
+        logging.error("[X] Exception : ", exc_info=True)
 
 # Return two things:
 # 1. The root volume which contains the windows installation.
@@ -191,7 +199,7 @@ def GetMetaDataForFile(path,artType):
         else:
             return ""
     except Exception as e:
-        logging.error(e)
+        logging.error("[X] Exception : ", exc_info=True)
     return ""
 # Go through a folder recursevlly and calls the function GetMetaDataForFile() for each file it finds.
 def GetMetaData(path,artType):
@@ -211,7 +219,7 @@ def copyDirectory(src, dest):
         else:
             logging.warning("[+] Folder not Found \"{}\" ".format(src))
     except Exception as e:
-        logging.error(e)
+        logging.error("[X] Exception : ", exc_info=True)
         logging.warning("[!] Unable to copy the Directory : "+src)
 
 # Gets wildcard paths and return the absulote path.
@@ -255,7 +263,7 @@ def justCopy(srcPath,dstPath):
             logging.warning("[!] Unable to copy the file \"{}\" . The file is Not Found / Empty!".format(srcPath))
     except Exception as e:
         logging.error("[!] Unable to copy the file \"{}\" .".format(srcPath))
-        logging.error(e)
+        logging.error("[X] Exception : ", exc_info=True)
 
 # Copy a file.
 def CopyFile(src,dest):
@@ -270,7 +278,7 @@ def CopyFile(src,dest):
             logging.warning("[+] File not Found \"{}\" ".format(src))
     except Exception as e:
         logging.warning("[!] Unable to copy the file \"{}\" ".format(src))
-        logging.error(e)
+        logging.error("[X] Exception : ", exc_info=True)
 # The main function responsable for collecting the artifacts.
 def collect_artfacts(out, drive,arch,target):
     allArtifacts = yaml_config['all_artifacts']
@@ -339,7 +347,7 @@ def main():
     if args.services:
         logging.info("[+] Collecting Services.")
         GetServices()
-    if args.all ==True:
+    if args.all == True or len(sys.argv) <= 1:
         logging.info("[+] Collecting Processes.")
         GetProcesses()
         logging.info("[+] Collecting Services.")
@@ -379,7 +387,7 @@ if __name__ == '__main__':
             try:
                 shutil.rmtree(ou)
             except Exception as e:
-                logging.error(e)
+                logging.error("[X] Exception : ", exc_info=True)
     else:
         # Re-run the program with admin rights
-        ctypes.windll.shell32.ShellExecuteW(None, u"runas", unicode(sys.executable), unicode(" ".join(sys.argv)), "", 1)
+        ctypes.windll.shell32.ShellExecuteW(None, u"runas", unicode(sys.executable), unicode(subprocess.list2cmdline(sys.argv)), "", 1)
