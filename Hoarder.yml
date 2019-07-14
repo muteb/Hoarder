@@ -251,6 +251,12 @@ all_artifacts:
     copyType: 'normal'
     description: 'Windows Error Reporting Files'
 
+  SystemInfo:
+    output: 'SystemInfo'
+    cmd: 'systeminfo'
+    type: 'run'
+    description: 'Get system information'
+
 
 
 

@@ -12,12 +12,13 @@ To install Hoarder  dependences run the following command on a privileged termin
 Make sure that `hoarder.yml` is on the same directory as the script. `hoarder.yml` is YAML file that contains artifacts. Hoarder will read this file and generate argument at runtime (try `python hoarder.py -h`). The following is the list of argument :
 
 ```
-	usage: hoarder.py [-h] [-a] [-p] [-v VOLUME] [-s] [--BMC] [--Ntfs]
-                  [--PowerShellHistory] [--Jump_List] [--Ntuser] [--SRUM]
-                  [--Startup] [--BrowserHistory] [--Events] [--CCM]
-                  [--applications] [--WMI] [--prefetch] [--WMITraceLogs]
-                  [--RecycleBin] [--Firwall] [--WindowsIndexSearch] [--Config]
-                  [--scheduled_task] [--usrclass] [--Recent]
+usage: hoarder.py [-h] [-a] [-p] [-v VOLUME] [-s] [--PowerShellHistory]
+                  [--Config] [--SystemInfo] [--CCM] [--WMITraceLogs]
+                  [--Firwall] [--Events] [--usrclass] [--BMC] [--Ntuser]
+                  [--WERFiles] [--SRUM] [--Jump_List] [--Recent] [--Ntfs]
+                  [--applications] [--WMI] [--scheduled_task] [--Startup]
+                  [--BrowserHistory] [--prefetch] [--RecycleBin]
+                  [--WindowsIndexSearch] [-V]
 
 Hoarder is a tool to collect windows artifacts.
 
@@ -30,27 +31,30 @@ optional arguments:
                         default hoarder will automatically look for the root
                         volume)
   -s, --services        Collect information about the system services.
-  --BMC                 BMC files for all the users
-  --Ntfs                $MFT file
   --PowerShellHistory   PowerShell history for all the users
-  --Jump_List           JumpList files
-  --Ntuser              All users hives
-  --SRUM                SRUM folder
-  --Startup             Startup info
-  --BrowserHistory      BrowserHistory Data
-  --Events              Windows event logs
+  --Config              System hives
+  --SystemInfo          Get system information
   --CCM                 CCM Logs
+  --WMITraceLogs        WMI Trace Logs
+  --Firwall             Firewall Logs
+  --Events              Windows event logs
+  --usrclass            UserClass.dat file for all the users
+  --BMC                 BMC files for all the users
+  --Ntuser              All users hives
+  --WERFiles            Windows Error Reporting Files
+  --SRUM                SRUM folder
+  --Jump_List           JumpList files
+  --Recent              Recently opened files
+  --Ntfs                $MFT file
   --applications        Amcache files
   --WMI                 WMI OBJECTS.DATA file
-  --prefetch            Prefetch files
-  --WMITraceLogs        WMI Trace Logs
-  --RecycleBin          RecycleBin Files
-  --Firwall             Firewall Logs
-  --WindowsIndexSearch  Windows Search artifacts
-  --Config              System hives
   --scheduled_task      Scheduled Tasks files
-  --usrclass            UserClass.dat file for all the users
-  --Recent              Recently opened files
+  --Startup             Startup info
+  --BrowserHistory      BrowserHistory Data
+  --prefetch            Prefetch files
+  --RecycleBin          RecycleBin Files
+  --WindowsIndexSearch  Windows Search artifacts
+  -V, --version         Print Hoarder version number.
 ```
 
 #### Example
@@ -63,7 +67,9 @@ After the script finishes it will generate a zip file called `<HOSTNAME>.zip` co
 
 ## Add an artifact to hoarder.yml
 
-The following is an example for an artifact:
+### File and Folder Artifacts
+
+The following is an example for file or folder collection:
 
 ```yaml
 applications: 
@@ -87,4 +93,33 @@ applications:
 * copyType : Hoarder support two types of coping a file, normal and justCopy.
   * normal : a normal copy to the file. This type should be used if the file is not locked and it could be copied normally.
   * justCopy : This type of coping is used to copy files in use (locked) which can not be copied using the normal method such as $MFT and Amcache.hve
+* description : a description  about the artifact. This key is used in hoarder command line to show some information about the artifact.
+
+### Command Execution 
+
+Hoarder also support the execution of system commands. The following example shows the execution of the command "systeminfo":
+
+```yaml
+SystemInfo:
+    output: 'SystemInfo'
+    cmd: 'systeminfo'
+    type: 'run'
+    description: 'Get system information'
+```
+
+* SystemInfo : This is the name of the artifact. This name will be used as an argument in the hoarder command line.
+
+output : This is the name of the output folder for this artifact.
+
+* cmd : The command to be executed. If you want to revere to the output file you can use the variable `{{resultsPath}}`. For example the if your cmd key value is `systeminfo > {{resultsPath}}\results.txt` it will be evaluated as:
+
+```
+systeminfo > _HoarderDirectory_\_HostName_\SystemInfo\results.txt
+					   |				|		|
+					   |				|		------------------|
+					   V				V						  V
+	The path of Hoarder executable	Machine Hostname	 'output' key value
+```
+
+* type : The type of the  artifact. Could be `cmd` or `run`
 * description : a description  about the artifact. This key is used in hoarder command line to show some information about the artifact.

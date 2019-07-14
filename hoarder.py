@@ -17,6 +17,8 @@ import io
 import ctypes
 import subprocess
 
+__version__ = "2.6.3"
+
 # Set Process Priority to LOW.
 p = psutil.Process(os.getpid())
 p.nice(0x00000040)
@@ -46,12 +48,18 @@ allArtifacts = yaml_config['all_artifacts']
 for key,value in allArtifacts.items():
     parser.add_argument('--'+key, action="store_true", help=allArtifacts[key]['description'])
 
+parser.add_argument('-V', '--version', action="store_true", help='Print Hoarder version number.')
+
 args = parser.parse_args()
 
 global ou
 ou = os.getenv('COMPUTERNAME')
 global metadata
 metadata = []
+
+def printVersion():
+    print(__version__)
+    sys.exit()
 
 # This function take's a path to a file as argument then return it's MD% hash.
 def md5(fname):
@@ -279,10 +287,43 @@ def CopyFile(src,dest):
     except Exception as e:
         logging.warning("[!] Unable to copy the file \"{}\" ".format(src))
         logging.error("[X] Exception : ", exc_info=True)
+
+def executeCommand(cmd,outFolder):
+    try:
+        outPath = os.path.abspath(os.path.join(".\\"+ou,outFolder))
+        cmd = cmd.replace("{{resultsPath}}",outPath)
+        results = subprocess.check_output(cmd.split())
+        output = "{}\n{}\n\n{}\n{}".format(cmd,"="*len(cmd),results,"="*len(cmd))
+        outFilePath = os.path.join(outPath,"CommandResults.txt")
+        if not os.path.exists(outPath):
+            os.makedirs(outPath)
+        with open(outFilePath,"w") as outFile:
+            outFile.write(output)
+    except:
+        try:
+            cmd = os.path.join(os.path.abspath("./EXEs"),cmd)
+            outPath = os.path.abspath(os.path.join(".\\"+ou,outFolder))
+            cmd = cmd.replace("{{resultsPath}}",outPath)
+            results = subprocess.check_output(cmd.split())
+            output = "{}\n{}\n\n{}\n{}".format(cmd,"="*len(cmd),results,"="*len(cmd))
+            outFilePath = os.path.join(outPath,"command_results.txt")
+            if not os.path.exists(outPath):
+                os.makedirs(outPath)
+            with open(outFilePath,"w") as outFile:
+                outFile.write(output)
+        except Exception as e:
+            logging.error("[X] Error : Could not execute the command \"{}\"".format(cmd))
+            logging.error("[X] Exception : ", exc_info=True)
+
 # The main function responsable for collecting the artifacts.
 def collect_artfacts(out, drive,arch,target):
     allArtifacts = yaml_config['all_artifacts']
     typeOfArt = allArtifacts[target]['type']
+    if typeOfArt == "cmd" or typeOfArt == "run":
+        cmd = allArtifacts[target]["cmd"]
+        destFolder = allArtifacts[target]['output']
+        executeCommand(cmd,destFolder)
+        return
     if arch == "32":
         paths = allArtifacts[target]['path32']
     else:
@@ -372,6 +413,8 @@ def main():
 
 
 if __name__ == '__main__':
+    if args.version:
+        printVersion()
     if is_admin():
         logging.info("[+] Hoarder Started!")
         if os.path.exists(ou):
