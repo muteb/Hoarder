@@ -115,10 +115,10 @@ output : This is the name of the output folder for this artifact.
 
 ```
 systeminfo > _HoarderDirectory_\_HostName_\SystemInfo\results.txt
-					   |				|		|
-					   |				|		------------------|
-					   V				V						  V
-	The path of Hoarder executable	Machine Hostname	 'output' key value
+		    |		    |		|
+		    |		    |		------------------|
+		    V		    V				  V
+The path of Hoarder executable	Machine Hostname	 'output' key value
 ```
 
 * type : The type of the  artifact. Could be `cmd` or `run`
