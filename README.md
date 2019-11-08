@@ -128,5 +128,5 @@ The path of Hoarder executable	Machine Hostname	 'output' key value
 * type : The type of the  artifact. Could be `cmd` or `run`
 * description : a description  about the artifact. This key is used in hoarder command line to show some information about the artifact.
 
-##Contributors:
+## Contributors:
 Big thanks to AbdulRhman Alfaifi https://github.com/AbdulRhmanAlfaifi for his tremendous effrot in rewriting this project in a proper way and his ideas.  
