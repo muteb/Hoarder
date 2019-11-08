@@ -1,5 +1,9 @@
 # Hoarder
-This script is made to collect the most valuable artifacts for forensics or incident response investigation rather than imaging the whole hard drive. 
+This script is made to collect the most valuable artifacts for forensics or incident response investigation rather than imaging the whole hard drive.
+
+# Executable Releases:
+You may find the executable binaries for x86 and x64 on https://github.com/muteb/Hoarder/releases/download/2.6.3/Hoarder_v2.6.3.zip
+
 
 ## installing dependences
 
@@ -123,3 +127,6 @@ The path of Hoarder executable	Machine Hostname	 'output' key value
 
 * type : The type of the  artifact. Could be `cmd` or `run`
 * description : a description  about the artifact. This key is used in hoarder command line to show some information about the artifact.
+
+##Contributors:
+Big thanks to AbdulRhman Alfaifi https://github.com/AbdulRhmanAlfaifi for his tremendous effrot in rewriting this project in a proper way and his ideas.  
