@@ -1,7 +1,7 @@
 # Hoarder
 This script is made to collect the most valuable artifacts for forensics or incident response investigation rather than imaging the whole hard drive.
 
-# Executable Releases:
+## Executable Releases:
 You may find the executable binaries for x86 and x64 on https://github.com/muteb/Hoarder/releases/download/2.6.3/Hoarder_v2.6.3.zip
 
 
