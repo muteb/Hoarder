@@ -93,9 +93,9 @@ The following is an example for file or folder collection:
 
 * applications : This is the name of the artifact. This name will be used as an argument in the hoarder command line.
 * output : This is the name of the output folder for this artifact.
-* path32 : The path to the artifact for 32bit systems.
-* path64 : The path to the artifact for 64bit systems.
-* files : The file name/s. it could be a single string or a list as the example above.
+* path32 : The path to the artifact for 32bit systems, you can use * as widecard, and ** as recursive.
+* path64 : The path to the artifact for 64bit systems, you can use * as widecard, and ** as recursive.
+* files : The file name/s. it could be a single string or a list as the example above, also you can use * as widecard.
 * description : a description about the artifact. This key is used in hoarder command line to show some information about the artifact.
 
 ### Command Execution 
