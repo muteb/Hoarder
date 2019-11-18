@@ -91,12 +91,12 @@ The following is an example for file or folder collection:
       description: 'Amcache files'
 ```
 
-* applications : This is the name of the artifact. This name will be used as an argument in the hoarder command line.
-* output : This is the name of the output folder for this artifact.
-* path32 : The path to the artifact for 32bit systems, you can use * as widecard, and ** as recursive.
-* path64 : The path to the artifact for 64bit systems, you can use * as widecard, and ** as recursive.
-* files : The file name/s. it could be a single string or a list as the example above, also you can use * as widecard.
-* description : a description about the artifact. This key is used in hoarder command line to show some information about the artifact.
+* **applications** : This is the name of the artifact. This name will be used as an argument in the hoarder command line.
+* **output** : This is the name of the output folder for this artifact.
+* **path32** : The path to the artifact for 32bit systems, you can use * as widecard, and ** as recursive.
+* **path64** : The path to the artifact for 64bit systems, you can use * as widecard, and ** as recursive.
+* **files** : The file name/s. it could be a single string or a list as the example above, also you can use * as widecard.
+* **description** : a description about the artifact. This key is used in hoarder command line to show some information about the artifact.
 
 ### Command Execution 
 
@@ -109,11 +109,11 @@ Hoarder also support the execution of system commands. The following example sho
     description: 'Get system information'
 ```
 
-* SystemInfo : This is the name of the artifact. This name will be used as an argument in the hoarder command line.
+* **SystemInfo** : This is the name of the artifact. This name will be used as an argument in the hoarder command line.
 
 output : This is the name of the output folder for this artifact.
 
-* cmd : The command to be executed. If you want to revere to the output file you can use the variable `{{resultsPath}}`. For example the if your cmd key value is `systeminfo > {{resultsPath}}\results.txt` it will be evaluated as:
+* **cmd** : The command to be executed. If you want to revere to the output file you can use the variable `{{resultsPath}}`. For example the if your cmd key value is `systeminfo > {{resultsPath}}\results.txt` it will be evaluated as:
 
 ```
 systeminfo > _HoarderDirectory_\_HostName_\SystemInfo\results.txt
@@ -123,7 +123,7 @@ systeminfo > _HoarderDirectory_\_HostName_\SystemInfo\results.txt
 The path of Hoarder executable	Machine Hostname	 'output' key value
 ```
 
-* description : a description  about the artifact. This key is used in hoarder command line to show some information about the artifact.
+* **description** : a description  about the artifact. This key is used in hoarder command line to show some information about the artifact.
 
 ## Contributors:
 Big thanks to [AbdulRhman Alfaifi](https://github.com/AbdulRhmanAlfaifi) and [Saleh Bin Muhaysin](https://github.com/salehmuhaysin) for their tremendous effrot in rewriting this project in a proper way and his ideas.  
