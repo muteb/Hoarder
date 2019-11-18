@@ -33,7 +33,7 @@ argsplugins.add_argument('-s', '--services', action="store_true", help='Collect 
 
 # build the artifacts and commands options
 argspartifacts  = args_set.add_argument_group('Artifacts')
-argscommands    = args_set.add_argument_group('Commandss')
+argscommands    = args_set.add_argument_group('Commands')
 
 yaml_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), hoarder_config)
 try:
