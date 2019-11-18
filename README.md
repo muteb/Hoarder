@@ -2,8 +2,8 @@
 This script is made to collect the most valuable artifacts for forensics or incident response investigation rather than imaging the whole hard drive.
 
 ## Executable Releases:
-You may find the executable binaries for x86 and x64 on https://github.com/muteb/Hoarder/releases/download/2.6.3/Hoarder_v2.6.3.zip
-
+You may find the executable binaries for x86 and x64 on 
+>> will be added soon
 
 ## installing dependences
 
@@ -13,61 +13,66 @@ To install Hoarder  dependences run the following command on a privileged termin
 
 ## Usage
 
-Make sure that `hoarder.yml` is on the same directory as the script. `hoarder.yml` is YAML file that contains artifacts. Hoarder will read this file and generate argument at runtime (try `python hoarder.py -h`). The following is the list of argument :
+Make sure that `Hoarder.yml` is on the same directory as the script. `Hoarder.yml` is YAML file that contains artifacts. Hoarder will read this file and generate argument at runtime (try `python hoarder.py -h`). The following is the list of argument :
 
 ```
-usage: hoarder.py [-h] [-a] [-p] [-v VOLUME] [-s] [--PowerShellHistory]
-                  [--Config] [--SystemInfo] [--CCM] [--WMITraceLogs]
-                  [--Firwall] [--Events] [--usrclass] [--BMC] [--Ntuser]
-                  [--WERFiles] [--SRUM] [--Jump_List] [--Recent] [--Ntfs]
-                  [--applications] [--WMI] [--scheduled_task] [--Startup]
-                  [--BrowserHistory] [--prefetch] [--RecycleBin]
-                  [--WindowsIndexSearch] [-V]
+usage: hoarder.py [-h] [-V] [-v] [-a] [-p] [-s] [--Ntfs]
+                   [--PowerShellHistory] [--scheduled_task] [--applications]
+                   [--WindowsIndexSearch] [--prefetch] [--usrclass] [--Config]
+                   [--WERFiles] [--Jump_List] [--BrowserHistory]
+                   [--RecycleBin] [--WMITraceLogs] [--Recent] [--Ntuser]
+                   [--CCM] [--Startup] [--Events] [--WMI] [--SRUM]
+                   [--SystemInfo] [--BMC] [--Firwall]
 
 Hoarder is a tool to collect windows artifacts.
 
 optional arguments:
   -h, --help            show this help message and exit
-  -a, --all             Get all (Default)
-  -p, --processes       Collect information about the running processes.
-  -v VOLUME, --volume VOLUME
-                        Select a volume letter to collect artifacts from (By
-                        default hoarder will automatically look for the root
-                        volume)
-  -s, --services        Collect information about the system services.
-  --PowerShellHistory   PowerShell history for all the users
-  --Config              System hives
-  --SystemInfo          Get system information
-  --CCM                 CCM Logs
-  --WMITraceLogs        WMI Trace Logs
-  --Firwall             Firewall Logs
-  --Events              Windows event logs
-  --usrclass            UserClass.dat file for all the users
-  --BMC                 BMC files for all the users
-  --Ntuser              All users hives
-  --WERFiles            Windows Error Reporting Files
-  --SRUM                SRUM folder
-  --Jump_List           JumpList files
-  --Recent              Recently opened files
-  --Ntfs                $MFT file
-  --applications        Amcache files
-  --WMI                 WMI OBJECTS.DATA file
-  --scheduled_task      Scheduled Tasks files
-  --Startup             Startup info
-  --BrowserHistory      BrowserHistory Data
-  --prefetch            Prefetch files
-  --RecycleBin          RecycleBin Files
-  --WindowsIndexSearch  Windows Search artifacts
   -V, --version         Print Hoarder version number.
+  -v, --verbose         Print details of hoarder message in console.
+  -a, --all             Get all (Default)
+
+Plugins:
+  -p, --processes       Collect information about the running processes.
+  -s, --services        Collect information about the system services.
+
+Artifacts:
+  --Ntfs                $MFT file
+  --PowerShellHistory   PowerShell history for all the users
+  --scheduled_task      Scheduled Tasks files
+  --applications        Amcache files
+  --WindowsIndexSearch  Windows Search artifacts
+  --prefetch            Prefetch files
+  --usrclass            UserClass.dat file for all the users
+  --Config              System hives
+  --WERFiles            Windows Error Reporting Files
+  --Jump_List           JumpList files
+  --BrowserHistory      BrowserHistory Data
+  --RecycleBin          RecycleBin Files
+  --WMITraceLogs        WMI Trace Logs
+  --Recent              Recently opened files
+  --Ntuser              All users hives
+  --CCM                 CCM Logs
+  --Startup             Startup info
+  --Events              Windows event logs
+  --WMI                 WMI OBJECTS.DATA file
+  --SRUM                SRUM folder
+  --BMC                 BMC files for all the users
+  --Firwall             Firewall Logs
+
+Commandss:
+  --SystemInfo          Get system information
+
 ```
 
 #### Example
 
-Let's say you want to collect all of the artifacts specified in `hoarder.yml` then all you need to do is:
+Let's say you want to collect all of the artifacts specified in `Hoarder.yml` then all you need to do is:
 
 `python hoarder.py --all` or `python hoarder.py -a` 
 
-After the script finishes it will generate a zip file called `<HOSTNAME>.zip` contains all of the artifacts in addition to `metadata.csv` which contains all selected artifacts' metadata (path,time, etc) and `hoarder.log` that contains the script debugging logs.
+After the script finishes it will generate a zip file called `<HOSTNAME>.zip` contains all of the artifacts in addition to  `hoarder.log` that contains the script debugging logs.
+
 
 ## Add an artifact to hoarder.yml
 
@@ -76,15 +81,13 @@ After the script finishes it will generate a zip file called `<HOSTNAME>.zip` co
 The following is an example for file or folder collection:
 
 ```yaml
-applications: 
+  applications: 
       output: 'applications'
       path32: '\Windows\AppCompat\Programs\'
       path64: '\Windows\AppCompat\Programs\'
-      para: 
+      files:  
       - Amcache.hve*
       - RecentFileCache.bcf
-      type: 'file'
-      copyType: 'justCopy'
       description: 'Amcache files'
 ```
 
@@ -92,22 +95,17 @@ applications:
 * output : This is the name of the output folder for this artifact.
 * path32 : The path to the artifact for 32bit systems.
 * path64 : The path to the artifact for 64bit systems.
-* para : The file name/s. it could be a single string or a list as the example above.
-* type : The time of the artifact. is it a file or folder.
-* copyType : Hoarder support two types of coping a file, normal and justCopy.
-  * normal : a normal copy to the file. This type should be used if the file is not locked and it could be copied normally.
-  * justCopy : This type of coping is used to copy files in use (locked) which can not be copied using the normal method such as $MFT and Amcache.hve
-* description : a description  about the artifact. This key is used in hoarder command line to show some information about the artifact.
+* files : The file name/s. it could be a single string or a list as the example above.
+* description : a description about the artifact. This key is used in hoarder command line to show some information about the artifact.
 
 ### Command Execution 
 
 Hoarder also support the execution of system commands. The following example shows the execution of the command "systeminfo":
 
 ```yaml
-SystemInfo:
+  SystemInfo:
     output: 'SystemInfo'
     cmd: 'systeminfo'
-    type: 'run'
     description: 'Get system information'
 ```
 
@@ -125,8 +123,7 @@ systeminfo > _HoarderDirectory_\_HostName_\SystemInfo\results.txt
 The path of Hoarder executable	Machine Hostname	 'output' key value
 ```
 
-* type : The type of the  artifact. Could be `cmd` or `run`
 * description : a description  about the artifact. This key is used in hoarder command line to show some information about the artifact.
 
 ## Contributors:
-Big thanks to AbdulRhman Alfaifi https://github.com/AbdulRhmanAlfaifi for his tremendous effrot in rewriting this project in a proper way and his ideas.  
+Big thanks to [AbdulRhman Alfaifi](https://github.com/AbdulRhmanAlfaifi) and [Saleh Bin Muhaysin](https://github.com/salehmuhaysin) for their tremendous effrot in rewriting this project in a proper way and his ideas.  
