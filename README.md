@@ -65,7 +65,7 @@ Commands:
 
 ```
 
-Plugins vs Commands:
+#### Plugins vs Commands:
 - **Plugins**: predefined functions inside the script can be called to get specific results, such as processes and services
 - **Commands**: defined inside `Hoarder.yml` to execute single command-line, such as `systeminfo`
 
