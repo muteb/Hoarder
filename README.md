@@ -60,7 +60,7 @@ Artifacts:
   --BMC                 BMC files for all the users
   --Firwall             Firewall Logs
 
-Commandss:
+Commands:
   --SystemInfo          Get system information
 
 ```
