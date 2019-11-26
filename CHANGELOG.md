@@ -7,6 +7,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+
+
+## [3.1.0] - 2019-11-27
+
+### Changed:
+- Hoarder now does not depends on the OS to detect the Physical Drive to collect the files from, instead it will iterate over all the Phyisical Drives (\\.\PhysicalDrive0, \\.\PhysicalDrive1, etc.) and collect the files matching the configuration on `Hoarder.yml`, it is hoarder literally ;)
+- Mutiple changes on `Hoarder.yml` config file
+
+
 ## [3.0.0] - 2019-11-18
 
 ### Changed:

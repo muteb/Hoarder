@@ -1,13 +1,44 @@
 output_Content:
  output: 'output'
-    
+
+
+# use ** at the end to indicate recursive
+# use * any where to indicate any entry on the folder only (not recursive)
+# you can use * as widecard on the entry name, such as "*.evtx"
+
 all_artifacts:
+
+  Events: 
+      output: 'Events'
+      path32: '\windows\system32\winevt\Logs\'
+      path64: '\windows\system32\winevt\Logs\'
+      files: '*'
+      description: 'Windows event logs'
+
+  Ntfs: 
+      output: 'Ntfs'
+      path32: '\'
+      path64: '\'
+      files:  
+      - $MFT
+      - $MFTMirr
+      - $LogFile
+      description: '$MFT file'
+
+  prefetch:
+    output: 'prefetch'
+    path32: '\Windows\prefetch\'
+    path64: '\Windows\prefetch\'
+    files:  '*.pf'
+    description: 'Prefetch files'
+    
 
   Recent:
       output: 'Recent'
       path32: '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\**'
       path64: '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\**'
       description: 'Recently opened files'
+
   Startup:
       output: 'startup'
       path32: '\Windows\System32\WDI\LogFiles\StartupInfo\**'
@@ -53,14 +84,8 @@ all_artifacts:
       - BBI
       - ELAM
       - COMPONENTS
-      type: 'file'
       description: 'System hives'
   
-  Events: 
-      output: 'Events'
-      path32: '\windows\system32\winevt\Logs\**'
-      path64: '\windows\system32\winevt\Logs\**'
-      description: 'Windows event logs'
   
   Ntuser: 
       output: 'Ntuser'
@@ -92,20 +117,11 @@ all_artifacts:
       files:  'ConsoleHost_history.txt'
       description: 'PowerShell history for all the users'
 
-  Ntfs: 
-      output: 'Ntfs'
-      path32: '\'
-      path64: '\'
-      files:  
-      - $MFT
-      - $MFTMirr
-      - $LogFile
-      description: '$MFT file'
-  
+    
   RecycleBin: 
       output: 'RecycleBin'
-      path32: '\$Recycle.Bin\**\'
-      path64: '\$Recycle.Bin\**\'
+      path32: '\$Recycle.Bin\**'
+      path64: '\$Recycle.Bin\**'
       files:  '$I*'
       description: 'RecycleBin Files'
   
@@ -140,8 +156,8 @@ all_artifacts:
       
   BMC:
     output: 'BMC'
-    path32: '\Users\*\AppData\Local\Microsoft\Terminal Server Client\Cache'
-    path64: '\Users\*\AppData\Local\Microsoft\Terminal Server Client\Cache'
+    path32: '\Users\*\AppData\Local\Microsoft\Terminal Server Client\Cache\'
+    path64: '\Users\*\AppData\Local\Microsoft\Terminal Server Client\Cache\'
     files:  '*.bmc'
     description: 'BMC files for all the users'
     
@@ -161,19 +177,19 @@ all_artifacts:
   BrowserHistory:
     output: 'BrowserHistory'
     path32: 
-    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default\*'
-    - '\Users\*\AppData\local\Google\Chrome\User Data\Default\*'
-    - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\*'
-    - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\*'
-    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\*'
+    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default\'
+    - '\Users\*\AppData\local\Google\Chrome\User Data\Default\'
+    - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\'
+    - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\'
+    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\'
     path64: 
-    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default\*'
-    - '\Users\*\AppData\local\Google\Chrome\User Data\Default\*'
-    - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\*'
-    - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\*'
-    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\*'
+    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default\'
+    - '\Users\*\AppData\local\Google\Chrome\User Data\Default\'
+    - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\'
+    - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\'
+    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\'
     files:  
-    - 'History'
+    - 'History*'
     - 'Cache'
     - 'Cookies'
     - 'WebCacheV01.dat'

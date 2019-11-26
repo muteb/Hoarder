@@ -13,8 +13,10 @@ import argparse
 import hashlib
 import ctypes
 import sys
+import fnmatch
 
-__version__ = "3.0"
+
+__version__ = "3.1.0"
 
 hoarder_config = "Hoarder.yml"
 # Add the static arguments.
@@ -22,6 +24,7 @@ args_set = argparse.ArgumentParser(description="Hoarder is a tool to collect win
 
 args_set.add_argument('-V', '--version', action="store_true", help='Print Hoarder version number.')
 args_set.add_argument('-v', '--verbose', action="store_true", help='Print details of hoarder message in console.')
+args_set.add_argument('-vv', '--very_verbose', action="store_true", help='Print more details (DEBUG) of hoarder message in console.')
 args_set.add_argument('-a', '--all', action="store_true", help='Get all (Default)')
 
 #args_set.add_argument('-v', '--volume', help='Select a volume letter to collect artifacts from (By default hoarder will automatically look for the root volume)')
@@ -33,7 +36,7 @@ argsplugins.add_argument('-s', '--services', action="store_true", help='Collect 
 
 # build the artifacts and commands options
 argspartifacts  = args_set.add_argument_group('Artifacts')
-argscommands    = args_set.add_argument_group('Commands')
+argscommands    = args_set.add_argument_group('Commandss')
 
 yaml_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), hoarder_config)
 try:
@@ -167,14 +170,36 @@ class Plugins:
         
     
 class Hoarder:
-    bVerboseEnabled = False
+    verbose         = 0
     options         = []
     plugins         = Plugins()
-    def __init__(self, config_file , options=None , enabled_verbose = False , output=None, compress_level=6, compress_method = zipfile.ZIP_DEFLATED):
-        
+
+    FILE_TYPE_LOOKUP = {
+      pytsk3.TSK_FS_NAME_TYPE_UNDEF: "-",
+      pytsk3.TSK_FS_NAME_TYPE_FIFO: "p",
+      pytsk3.TSK_FS_NAME_TYPE_CHR: "c",
+      pytsk3.TSK_FS_NAME_TYPE_DIR: "d",
+      pytsk3.TSK_FS_NAME_TYPE_BLK: "b",
+      pytsk3.TSK_FS_NAME_TYPE_REG: "r",
+      pytsk3.TSK_FS_NAME_TYPE_LNK: "l",
+      pytsk3.TSK_FS_NAME_TYPE_SOCK: "h",
+      pytsk3.TSK_FS_NAME_TYPE_SHAD: "s",
+      pytsk3.TSK_FS_NAME_TYPE_WHT: "w",
+      pytsk3.TSK_FS_NAME_TYPE_VIRT: "v"
+      }
+
+
+    def __init__(self, 
+                config_file, 
+                options         = None, 
+                enabled_verbose = 0, 
+                output          = None, 
+                compress_level  = 6, 
+                compress_method = zipfile.ZIP_DEFLATED):
+         
         self.options = options 
         
-        self.bVerboseEnabled    = enabled_verbose
+        self.verbose            = enabled_verbose
         self.hostname           = os.getenv('COMPUTERNAME')
         self.disk_drive         = "C:"
         
@@ -188,11 +213,16 @@ class Hoarder:
         self.logging("INFO" , "Hostname: " + self.hostname )
         self.logging("INFO" , "Arch: " + _platform)
         
+        if self.verbose == 1:
+            self.logging("INFO" , "Verbose mode enabled")
+        elif self.verbose == 2:
+            self.logging("INFO" , "very verbose mode enabled")
+
         # init. zip file
         try:
             if os.path.isfile(output ) :
                 os.remove(output)
-            self.zfile = zipfile.ZipFile(output, mode='w', compresslevel=compress_level , compression=compress_method)
+            self.zfile = zipfile.ZipFile(output, mode='w' , compresslevel=compress_level , compression=compress_method , allowZip64=True)
         except Exception as e:
             self.logging("ERR" , "Failed opening output file ["+output+".zip] : " + str(e))
             sys.exit()
@@ -202,26 +232,66 @@ class Hoarder:
         
         
         # make sure there are a OS on the disk 
-        if not self.GetWindowsPart():
-            self.logging("ERR" , "No Partition with Windows OS found")
-        
-        # get all artifacts paths selected
-        paths = self.GetPaths()
-        """paths = {
-            "users" : [
-                '/Users/K/Desktop/test.txt',
-                '/Users/K/Desktop/antest.txt'
-            ],
-            "program": [
-                '/ProgramData/testdata.txt',
-            ],
-            "": [
-                '/$LogFile'
-            ]
-        }
-        """
-        # extract all files and compress it
-        self.ExtractFiles(paths) 
+        list_imgs = {}
+        count = 0
+        while True:
+            try:
+                self.logging("INFO" , "Check drive: \\\\.\\PhysicalDrive" + str(count) )
+
+                # get all the fs_info of all volumes of the drive
+                list_imgs["PhysicalDrive" + str(count)] = self.GetVolumes("\\\\.\\PhysicalDrive" + str(count))
+
+                if len(list_imgs["PhysicalDrive" + str(count)]) == 0:
+                    self.logging("WORNING" , "No NTFS Partition found on PhyisicalDrive" + str(count))
+                else:
+                    self.logging("INFO" , "Found ["+str(len(list_imgs["PhysicalDrive" + str(count)]))+"] NTFS partitions on drive ["+"PhysicalDrive" + str(count)+"] ")
+
+            except Exception as e:
+                if str(e) == "PHYSICAL_DRIVE_NOT_FOUND":
+                    self.logging("WORNING" , "There is no \\\\.\\PhysicalDrive" + str(count))
+                    break
+                else:
+                    self.logging("ERR" , "Error found on getting NTFS parition: " + str(e))
+
+            count += 1
+
+        # get full paths from config for enabled artifacts
+        full_paths = self.GetConfigPaths()
+        for path in full_paths:
+            self.logging("DEBUG" , "Artifact: "+str(path['artifact'])+ "\tPath: " + path['path'] + ", \tFiles: " + str(path['files']))
+            
+
+        # if no path exists continue to next image
+        if len(full_paths) > 0:
+            
+            # get all artifacts paths selected from each drive
+            for img_info in list_imgs:
+                self.logging("INFO" , "Read drive ["+img_info+"]")
+                volum_num = 0
+                for fs_info in list_imgs[img_info]:
+
+                    # get the inode of root directory
+                    root_inode = self.GetInodeRoot(fs_info) 
+
+                    # if inode identified extract the files
+                    if root_inode is not None:
+                        self.logging("INFO" , "Start Extracting Volume #"+str(volum_num)+" Files")
+                        root_dir = fs_info.open_dir(inode=root_inode)
+                        fs_info_details = {
+                            'fs_info'   : fs_info,
+                            'drive'     : img_info,
+                            'volume'    : volum_num
+                        }
+
+                        # extract all files from the volume
+                        self.ExtractFilesPhysical(fs_info_details , cur_dir_obj=root_dir , paths_list=full_paths)
+
+                    # if inode could not identified
+                    else:
+                        self.logging("ERR" , "Couldn't identify the root inode")
+                    
+                    volum_num += 1
+ 
         
         # execute commands on yaml config
         self.ExecuteCommands()
@@ -235,9 +305,207 @@ class Hoarder:
         self.ZipWriteFile(f.read() , 'hoarder.log')
         f.close()
         
+
+
         self.zfile.close()
     
+    # get all paths from yaml config 
+    def GetConfigPaths(self):
+        # check if the config element is artifacts files and make sure whether the argument is all or the artifact selected
+        enabled_artifacts = [ea for ea in self.config if 'cmd' not in self.config[ea] and (ea in self.options or len(self.options) == 0)]
+        self.logging("INFO" , "Enabed Artifacts: " + str(len(enabled_artifacts)))
+        
+        full_paths = []
+        for arti in enabled_artifacts:
+            
+            # check Windows arch
+            if _platform == "win32" and 'path32' in self.config[arti]:
+                arti_paths = self.config[arti]['path32']
+            elif _platform == "win64" and 'path64' in self.config[arti]:
+                arti_paths = self.config[arti]['path64']
+            else:
+                continue
+
+            # if single path selected, add it to list
+            if type(arti_paths) is not list:
+                arti_paths = [arti_paths]
+            
+            
+            
+            files_list = []
+            for path in arti_paths:
+                path    = path.replace("\\" , "/") # replace \\ with /, pytsk only deals with /
+                files   = []
+                # append the files field with paths
+                if 'files' in self.config[arti]:
+                    files = self.config[arti]['files']
+                    if type(self.config[arti]['files']) is not list:
+                        files = [files]
+                
+
+                full_paths.append({'path':path , 'artifact' : arti , 'files' : files})
+
+
+            
+
+        # get paths
+        return full_paths
     
+    
+    # get the root inode of the file system 
+    def GetInodeRoot(self , fs_info):
+        if getattr(fs_info, 'info', None) is None:
+            return None
+        return getattr(fs_info.info, 'root_inum', None)
+
+    # extract all the files specified on the configuration from the partition 
+    def ExtractFilesPhysical(self , fs_info_details , cur_dir_obj ,  paths_list , current_path = "/" , bRecursive=False):
+
+        # build current folder entries
+        current_folders = {}
+        for p in paths_list:
+            cur_folder = p['path'].replace(current_path , '' , 1).split("/")[0]
+
+            # if current folder is **, then enable recursive mode
+            if cur_folder == "**":
+                bRecursive = True
+                self.logging("DEBUG" , "Recursive mode enabled ")
+
+            # if current folder already exists on folder entries, then append its content, other wise create new entry
+            if cur_folder in current_folders:
+                current_folders[cur_folder].append(p)
+            else:
+                current_folders[cur_folder] = [p]
+            
+    
+        for cur in current_folders:
+            self.logging("DEBUG" , "Entries: " + str(current_folders))
+
+        # for each entry inside the current directory object
+        for entry in cur_dir_obj:
+
+            # skip current and parent folders '.' and '..', or if it does not have name
+            if (not hasattr(entry, "info") or
+                not hasattr(entry.info, "name") or
+                not hasattr(entry.info.name, "name") or
+                entry.info.name.name.decode('utf-8') in [".", ".."]):
+                continue
+            
+            entry_name = entry.info.name.name.decode('utf-8')       # pytsk entry name
+            entry_type = entry.info.name.type                       # pytsk entry type
+            
+            #self.logging("DEBUG" , "Type: {0:d} \t Name:{1:s}".format( int(entry_type) , current_path + entry_name ) )
+
+            
+            # if current folder is recursive them copy the file if entry is file or recursive over the dirctory if entry is directory
+            if bRecursive:
+                # if entry is file, copy the file
+                if entry_type not in [pytsk3.TSK_FS_NAME_TYPE_DIR]:
+                    for folder in current_folders:
+                        for f in current_folders[folder]:
+                            # if the files not specified, then copy all files
+                            if len(f['files']) == 0:
+                                
+                                self.logging("INFO" , "-----found file type {0:d}\t{1:s} ".format(int(entry_type) , current_path + entry_name) )
+
+                                self.copy_file(fs_info_details , entry , self.config[f['artifact']]['output'] , current_path + entry_name )
+
+                            # if files specified, make sure it is specified
+                            else:
+                                for file in f['files']:
+                                    if fnmatch.fnmatch(entry_name, file):
+                                        
+                                        self.logging("INFO" , "-----found file type {0:d}\t{1:s} ".format(int(entry_type) , current_path + entry_name) )
+                                        
+                                        self.copy_file(fs_info_details , entry , self.config[f['artifact']]['output'] , current_path + entry_name )
+
+
+                # for directory, go inside the recursive to extract all its files
+                elif entry_type == pytsk3.TSK_FS_NAME_TYPE_DIR:
+                    for folder in current_folders:
+                            
+                        self.logging("DEBUG" , "Recursive enabled,  jumping inside the directory '{0:s}'".format(entry_name))
+                            
+                        # go inside the folder
+                        self.jump_to_folder(fs_info_details , current_folders , folder , entry , current_path , entry_name , bRecursive)
+
+
+            # if the files on the current directory, current directory will be '', others like 'windows' means entry inside the current directory
+            # and only if the current entry is not folder, if it is folder it will not collect the entry itself
+            elif '' in current_folders and entry_type not in [pytsk3.TSK_FS_NAME_TYPE_DIR]:
+                for f in current_folders['']:
+                    for file in f['files']:
+                        if fnmatch.fnmatch(entry_name, file):
+
+                            self.logging("INFO" , "-----found file type {0:d}\t{1:s} ".format(int(entry_type) , current_path + entry_name) )
+
+                            # copy the file
+                            self.copy_file(fs_info_details , entry , self.config[f['artifact']]['output'] , current_path + entry_name )
+                            
+
+
+            # if current entry such as 'windows' inside the current_folders, then need to go inside this folder
+            elif entry_type == pytsk3.TSK_FS_NAME_TYPE_DIR:
+                for folder in current_folders:
+                    if fnmatch.fnmatch(entry_name, folder):
+                        
+                        self.logging("DEBUG" , "Entry '{0:s}' match '{1:s}' folder, Jumping inside the directory".format(entry_name , folder))
+                        
+                        # go inside the folder
+                        self.jump_to_folder(fs_info_details , current_folders , folder , entry , current_path , entry_name , bRecursive)
+
+
+
+
+
+        self.logging("DEBUG" , "Folder '{0:s}' scanning done...".format(current_path))
+
+
+    # this receive information related to the curent folder to jump inside it 
+    def jump_to_folder(self, fs_info_details , current_folders , folder , entry , current_path , entry_name , bRecursive):
+        
+        new_current_path    = current_path + entry_name + "/"
+        new_current_folder  = []
+        for folder_entries in current_folders[folder]:
+            new_current_folder.append(folder_entries.copy())
+                            
+            # replace first hit, replace widecard with entry name,
+            new_current_folder[-1]['path'] = new_current_folder[-1]['path'].replace(current_path + folder , current_path + entry_name ) 
+
+        # test if the directory can be opened as directory to jump inside it
+        # some times pytsk detect a file as directory
+        dir = None
+        try:
+            dir = entry.as_directory()
+        except Exception as e:
+            self.logging("WORNING" , "Couldn't get the directory entry for ["+entry_name+"]")
+                        
+        if dir is not None:
+            self.ExtractFilesPhysical(fs_info_details , dir , new_current_folder , new_current_path , bRecursive=bRecursive)
+
+
+    # get the entry name and details needed to copy the file from physical disk to zip file
+    def copy_file(self, fs_info_details , entry , output_folder , file_path):
+        # check if the file has META entry and the address is not NONE
+        if not hasattr(entry.info, "meta"):
+            self.logging("WORNING" , "file: {0:s} does not have META object ".format(file_path))
+        elif entry.info.meta is None:
+            self.logging("WORNING" , "file meta {0:s} does not have file address".format(file_path))
+        else:
+            # read the content
+            fdata = self.ReadFile(fs_info_details['fs_info'] , addr=entry.info.meta.addr)
+            if fdata:
+                # write file content to the zip file 
+                dest_path = "{0:s}_{1:d}\\{2:s}{3:s}".format(
+                        fs_info_details['drive'].replace('\\' , '').replace('.' , '') , 
+                        fs_info_details['volume'] , 
+                        output_folder,
+                        file_path)
+                
+                # write the content of the file to zip file
+                self.ZipWriteFile( fdata , dest_path)  
+
+    # function used to run the specified plugin functions
     def RunPlugins(self):
         enabled_plugins = [p for p in self.plugins.plugins_list if p in self.options or len(self.options) == 0]
         
@@ -258,6 +526,7 @@ class Hoarder:
             else:
                 self.logging("ERR" , "Plugin ["+plugin+"] failed, reason: " + plugin_output[1])
         
+    # function run the specified commands on yaml configuration
     def ExecuteCommands(self):
         # check if the config element is command and make sure whether the argument is all or the command selected
         enabled_cmd = [ea for ea in self.config if 'cmd' in self.config[ea] and (ea in self.options or len(self.options) == 0)]
@@ -273,69 +542,6 @@ class Hoarder:
                 self.ZipWriteFile(out.decode('utf-8') , output + "\output.txt")
             except Exception as e:
                 self.logging("ERR" , "Failed executing the command - reason: " + str(e))
-        
-    def GetPaths(self):
-        # check if the config element is artifacts files and make sure whether the argument is all or the artifact selected
-        enabled_artifacts = [ea for ea in self.config if 'cmd' not in self.config[ea] and (ea in self.options or len(self.options) == 0)]
-        self.logging("INFO" , "Enabed Artifacts: " + str(len(enabled_artifacts)))
-        
-        # get paths
-        paths = {}
-        selected_files = 0
-        for arti in enabled_artifacts:
-            output_folder = self.config[arti]['output']
-            
-            # check Windows arch
-            if _platform == "win32" and 'path32' in self.config[arti]:
-                arti_paths = self.config[arti]['path32']
-            elif _platform == "win64" and 'path64' in self.config[arti]:
-                arti_paths = self.config[arti]['path64']
-            else:
-                continue
-            
-            # get all paths as list 
-            paths_list = []
-            if type(arti_paths) is not list:
-                arti_paths = [arti_paths]
-            for p in arti_paths:
-                paths_list.append(p)
-            
-            
-            
-            # append the para (files) with paths
-            if 'files' in self.config[arti]:
-                files_list = []
-                files = self.config[arti]['files']
-                if type(self.config[arti]['files']) is not list:
-                    files = [files]
-                for path in paths_list:
-                    for f in files:
-                        files_list.append(path + f)
-                paths_list = files_list
-                
-            # trace and replace the * to get full path
-            full_paths = []
-            for p in paths_list:
-                for i in self.GetWildCardPaths(p):
-                    full_paths.append(i)
-            
-            self.logging("INFO" , "Files ["+str(len(full_paths))+"] \t" + arti)
-            paths[output_folder] = full_paths
-            
-            selected_files += len(full_paths)
-            
-        self.logging("INFO" , "Found "+str(selected_files)+" files to be collected")
-        return paths
-    
-    # Gets wildcard paths and return the absulote path.
-    def GetWildCardPaths(self, path):
-        paths = []
-        for p in glob.glob(self.disk_drive + path , recursive=True ):
-            if os.path.isfile(p):
-                paths.append(p.lstrip(self.disk_drive) )
-            
-        return paths
-        
         
     # read the configuration file
     def GetYamlConfig(self, conf_file):
@@ -353,129 +559,68 @@ class Hoarder:
         return yaml_config['all_artifacts']
         
         
-    # get all files from the disk and compress it on zip file
-    def ExtractFiles(self , paths):
-        collected_files = 0
-        for key in paths:
-            # if there is no files to be collected skip
-            if len(paths[key]) == 0:
-                continue
-                
-            self.logging("INFO" , "Start ["+key+"] collection")
-            for file in paths[key]:
-                try:
-                    if key == "":
-                        file = file.lstrip('/')
-                    fdata = self.ReadFile(file)
-                    if fdata:
-                        self.ZipWriteFile( fdata , key + file)
-                        collected_files += 1
-                except Exception as e:
-                    self.logging("ERR" , "Failed collecting the file ["+file+"], reason: " + str(e))
-                    
-        self.logging("INFO" , "Successfuly finished collecting ["+str(collected_files)+"] files")
-        
     # write file to zip file
     def ZipWriteFile(self, data , path):
         self.zfile.writestr(path , data)
         
+    
     # read file content from disk
-    def ReadFile(self, path):
+    def ReadFile(self, img_info , path = None , addr = None):
         try:
-            f = self.filesystemObj.open(path.replace("\\" , "/"))
-            fdata = f.read_random(0,f.info.meta.size)
+            if addr is not None:
+                f = img_info.open_meta(inode=addr)
+                fdata = f.read_random(0 , f.info.meta.size)
+            elif path is not None:
+                f = img_info.open(path)
+                fdata = f.read_random(0,f.info.meta.size)
+            else:
+                self.logging("ERR" , "ReadFile function require either inode or path, None given")
+                return False
+
             return fdata
         except Exception as e:
-            self.logging ("ERR", "Failed reading the file: " + path + " - reason:" + str(e) )
+            self.logging ("ERR", "Failed reading the file: path[" + str(path) + "] or inode[" + str(addr) + "] - reason:" + str(e) )
             return False
         
-    # test function
-    def CopyFile(self, pathList , dir_root , curr_path = "/" ):
-        #print("Current Path: " + curr_path)
-        found_files  = 0 # count the number of files found on this directory
-        found_dirs   = 0 # count number of dirs found
-        for dir_entry in dir_root:
-            # if all files found on the directory then stop
-            if found_files + found_dirs >= len(pathList):
-                break
-            #print( dir_entry )
-            entry_meta = dir_entry.info.meta
-            entry_name = dir_entry.info.name
-            
-            # Skip ".", ".." or directory entries without a name.
-            if (not hasattr(dir_entry, "info") or
-                not hasattr(dir_entry.info, "name") or
-                not hasattr(dir_entry.info.name, "name") or
-                dir_entry.info.name.name.decode('utf-8') in [".", ".."]):
-                continue
-            
-            #print ( curr_path + dir_entry.info.name.name.decode('utf-8'))
-            temp_dir = []
-            #print( pathList )
-            for path in pathList:
-                if any(p[0] == path for p in self.pathsfound):
-                    continue
-                # check if path for file or dir
-                #print( curr_path + " >> " + path)
-                temp_path = path[len(curr_path)::]
-                #print( temp_path )
-                if len(temp_path.split('/')) > 1:
-                    # directory
-                    #print( "dir: " + temp_path )
-                    if temp_path.split('/')[0] == entry_name.name.decode('utf-8'):
-                        temp_dir.append(path)
-                        found_dirs += 1
-                        
-                else:
-                    # file 
-                    #print(temp_path + "=====" + entry_name.name.decode('utf-8'))
-                    if temp_path == entry_name.name.decode('utf-8'):
-                        #print( "=====found file: " + path )
-                        f = self.filesystemObj.open_meta()
-                        self.pathsfound.append([ path , f ])
-                        found_files += 1 
-            
-            #print(temp_dir)
-            if len(temp_dir):
-                new_path = curr_path + entry_name.name.decode('utf-8') + "/"
-                self.CopyFile(temp_dir ,  dir_entry.as_directory() , new_path)
-        
     # get the partion with Windows OS 
-    def GetWindowsPart(self, phyDrive = "\\\\.\\PhysicalDrive0"):
-        self.filesystemObj  = None   # contain the file system object
-        self.root_dir       = None   # store opened dir on root
-        bWindowsFound       = False  # true if partition with windows OS found
-        
-        img                 = pytsk3.Img_Info(phyDrive) # open the physical drive
-        volume              = pytsk3.Volume_Info(img)   # get volume information 
+    def GetVolumes(self, phyDrive = "\\\\.\\PhysicalDrive0"):
+        list_fs_info        = []     # contain the file system object
         block_size          = 512                       # by default block size is 512 
+
+        try:
+            img                 = pytsk3.Img_Info(phyDrive) # open the physical drive
+            volume              = pytsk3.Volume_Info(img)   # get volume information 
+        except OSError as e:
+            if "file not found" in str(e):
+                raise Exception("PHYSICAL_DRIVE_NOT_FOUND")
+            else:
+                raise Exception(str(e))
+
+        
+        # for each volume in the drive, check if it is NTFS and open object to handle it
         for part in volume:
             try:
-                self.filesystemObj = pytsk3.FS_Info(img , offset=part.start * block_size )
-                
-                dirs = []
-                for dir_entry in self.filesystemObj.open_dir("/"):
-                    dirs.append( dir_entry.info.name.name.decode("utf-8")  )
-                    # print( dir_entry.info.name.name )
-                
-                
-                if 'Windows' in dirs and 'Users' in dirs:
-                    #print( "[+] Windows Partition found: addr[%d] , desc[%s] , offet[%d] , size[%d] " , part.addr, part.desc.decode('utf-8'), part.start, part.len)
-                    bWindowsFound = True
-                    break
+                self.logging("INFO" , "Check partition: desc{0:s}, offset{1:d}, size:{2:d}".format( part.desc.decode('utf-8') ,part.start , part.len  ) )
+                fs_info = pytsk3.FS_Info(img , offset=part.start * block_size )
+                # check if file system is NTFS
+                if fs_info.info.ftype in [pytsk3.TSK_FS_TYPE_NTFS, pytsk3.TSK_FS_TYPE_NTFS_DETECT]:
+                    list_fs_info.append(fs_info) 
+
+                    
             except Exception as e :
                 pass
-                #print( "[-] Error %s" , str(e))
         
-        if bWindowsFound:
-            self.root_dir = self.filesystemObj.open_dir("/")
-        return bWindowsFound
+        return list_fs_info
 
+    # handle hoarder logs 
     def logging(self, type , msg):
         line = str(datetime.utcnow()) + " - " + type + ":" + msg 
-        if self.bVerboseEnabled:
-            print(line)
-        f = open("hoarder.log" , 'a' , newline = "")
+        if self.verbose:
+            if self.verbose == 1 and type != 'DEBUG':
+                print(line)
+            elif self.verbose == 2:
+                print(line)
+        f = open("hoarder.log" , 'a', encoding="utf-8" , newline = "")
         f.write( line + "\r\n")
         f.close()
 
@@ -512,14 +657,21 @@ if __name__ == '__main__':
         options = []
         v = vars(args)
         for a in v:
-            if a in ['all' , 'version' , 'verbose']:
+            if a in ['all' , 'version' , 'verbose' , 'very_verbose']:
                 continue
             if v[a]:
                 options.append(a) 
         
         # if user admin run hoarder
         if is_user_admin():
-            h = Hoarder(hoarder_config , options=options , enabled_verbose=args.verbose)   
+            verbose = 0
+            if args.very_verbose:
+                verbose = 2
+            elif args.verbose:
+                verbose = 1
+            
+            h = Hoarder(hoarder_config , options=options , enabled_verbose=verbose)  
+            
         else:
             # Re-run the program with admin rights
             ctypes.windll.shell32.ShellExecuteW(None, u"runas", sys.executable, subprocess.list2cmdline(sys.argv), "", 1)
