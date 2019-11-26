@@ -1,160 +1,128 @@
 output_Content:
  output: 'output'
-    
+
+
+# use ** at the end to indicate recursive
+# use * any where to indicate any entry on the folder only (not recursive)
+# you can use * as widecard on the entry name, such as "*.evtx"
+
 all_artifacts:
+
+  Events: 
+      output: 'Events'
+      path32: '\windows\system32\winevt\Logs\'
+      path64: '\windows\system32\winevt\Logs\'
+      files: '*'
+      description: 'Windows event logs'
+
+  Ntfs: 
+      output: 'Ntfs'
+      path32: '\'
+      path64: '\'
+      files:  
+      - $MFT
+      - $MFTMirr
+      - $LogFile
+      description: '$MFT file'
+
+  prefetch:
+    output: 'prefetch'
+    path32: '\Windows\prefetch\'
+    path64: '\Windows\prefetch\'
+    files:  '*.pf'
+    description: 'Prefetch files'
+    
 
   Recent:
       output: 'Recent'
-      path23: '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\'
-      path64: '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\'
-      para: ''
-      type: 'folder'
-      copyType: 'normal'
+      path32: '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\**'
+      path64: '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\**'
       description: 'Recently opened files'
+
   Startup:
       output: 'startup'
-      path32: '\Windows\System32\WDI\LogFiles\StartupInfo\'
-      path64: '\Windows\System32\WDI\LogFiles\StartupInfo\'
-      para: ''
-      type: 'folder'
-      copyType: 'normal'
+      path32: '\Windows\System32\WDI\LogFiles\StartupInfo\**'
+      path64: '\Windows\System32\WDI\LogFiles\StartupInfo\**'
       description: 'Startup info'
   SRUM:
       output: 'srum'
-      path32: '\Windows\System32\SRU\'
-      path64: '\Windows\System32\SRU\'
-      para: ''
-      type: 'folder'
-      copyType: 'normal'
+      path32: '\Windows\System32\SRU\**'
+      path64: '\Windows\System32\SRU\**'
       description: 'SRUM folder'
   Firwall:
       output: 'firewall'
-      path32: '\Windows\System32\LogFiles\Firewall\'
-      path64: '\Windows\System32\LogFiles\Firewall\'
-      para: ''
-      type: 'folder'
-      copyType: 'normal'
+      path32: '\Windows\System32\LogFiles\Firewall\**'
+      path64: '\Windows\System32\LogFiles\Firewall\**'
       description: 'Firewall Logs'
   CCM:
       output: 'ccm_logs'
       path32: 
-      - '\syswow64\ccm\logs\'
-      - '\Windows\ccm\logs\'
+      - '\syswow64\ccm\logs\**'
+      - '\Windows\ccm\logs\**'
       path64: 
-      - '\system32\ccm\logs\'
-      - '\Windows\ccm\logs\'
-      para: ''
-      type: 'folder'
-      copyType: 'normal'
+      - '\system32\ccm\logs\**'
+      - '\Windows\ccm\logs\**'
       description: 'CCM Logs'
       
   WindowsIndexSearch:
       output: 'WindowsIndexSearch'
       path32: '\programdata\microsoft\search\data\applications\windows\'
       path64: '\programdata\microsoft\search\data\applications\windows\'
-      para: Windows.edb
-      type: 'file'
-      copyType: 'justCopy'
+      files: Windows.edb
       description: 'Windows Search artifacts'
   Config: 
-      output: 'Config\'
+      output: 'Config'
       path32: '\Windows\System32\config\'
       path64: '\Windows\System32\config\'
-      para:
-      - DEFAULT
-      - SAM
-      - SECURITY
-      - SOFTWARE
-      - SYSTEM
-      - DEFAULT.LOG1
-      - SAM.LOG1
-      - SECURITY.LOG1
-      - SOFTWARE.LOG1
-      - SYSTEM.LOG1
-      - DEFAULT.LOG2
-      - SAM.LOG2
-      - SECURITY.LOG2
-      - SOFTWARE.LOG2
-      - SYSTEM.LOG2
-      - DEFAULT.LOG
-      - SAM.LOG
-      - SECURITY.LOG
-      - SOFTWARE.LOG
-      - SYSTEM.LOG
+      files:
+      - DEFAULT*
+      - SAM*
+      - SECURITY*
+      - SOFTWARE*
+      - SYSTEM*
       - DRIVERS
       - BBI
       - ELAM
       - COMPONENTS
-      type: 'file'
-      copyType: 'justCopy'
       description: 'System hives'
   
-  Events: 
-      output: 'Events'
-      path32: '\windows\system32\winevt\Logs'
-      path64: '\windows\system32\winevt\Logs'
-      para: ''
-      type: 'folder'
-      copyType: 'normal'
-      description: 'Windows event logs'
   
   Ntuser: 
       output: 'Ntuser'
-      path32: '\Users\*'
-      path64: '\Users\*'
-      para: 'NTUSER.DAT*'
-      type: 'file'
-      copyType: 'justCopy'
+      path32: '\Users\*\'
+      path64: '\Users\*\'
+      files:  'NTUSER.DAT*'
       description: 'All users hives'
   
   applications: 
       output: 'applications'
       path32: '\Windows\AppCompat\Programs\'
       path64: '\Windows\AppCompat\Programs\'
-      para: 
+      files:  
       - Amcache.hve*
       - RecentFileCache.bcf
-      type: 'file'
-      copyType: 'justCopy'
       description: 'Amcache files'
   
   usrclass: 
       output: 'usrclass'
       path32: '\Users\*\AppData\Local\Microsoft\Windows\'
       path64: '\Users\*\AppData\Local\Microsoft\Windows\'
-      para: 'UsrClass.dat'
-      type: 'file'
-      copyType: 'justCopy'
+      files:  'UsrClass.dat'
       description: 'UserClass.dat file for all the users'
       
   PowerShellHistory: 
       output: 'PowerShellHistory'
       path32: '\Users\*\Appdata\Roaming\Microsoft\Windows\PowerShell\PSReadline\'
       path64: '\Users\*\Appdata\Roaming\Microsoft\Windows\PowerShell\PSReadline\'
-      para: 'ConsoleHost_history.txt'
-      type: 'file'
-      copyType: 'normal'
+      files:  'ConsoleHost_history.txt'
       description: 'PowerShell history for all the users'
 
-  Ntfs: 
-      output: 'Ntfs'
-      path32: '\'
-      path64: '\'
-      para: 
-      - $MFT
-      - $MFTMirr
-      - $LogFile
-      type: 'file'
-      copyType: 'justCopy'
-      description: '$MFT file'
-  
+    
   RecycleBin: 
       output: 'RecycleBin'
-      path32: '\$Recycle.Bin\*'
-      path64: '\$Recycle.Bin\*'
-      para: '$I*'
-      type: 'file'
-      copyType: 'normal'
+      path32: '\$Recycle.Bin\**'
+      path64: '\$Recycle.Bin\**'
+      files:  '$I*'
       description: 'RecycleBin Files'
   
   WMI:
@@ -165,99 +133,77 @@ all_artifacts:
       path64: 
       - '\Windows\System32\wbem\Repository\'
       - '\Windows\System32\wbem\Repository\FS\'
-      para: 'OBJECTS.DATA'
-      type: 'file'
-      copyType: 'normal'
+      files:  'OBJECTS.DATA'
       description: 'WMI OBJECTS.DATA file'
   
   scheduled_task:
       output: 'scheduled_task'
       path32: 
-      - '\Windows\System32\Tasks'
-      - '\Windows\SysWOW64\Tasks'
+      - '\Windows\System32\Tasks\**'
+      - '\Windows\SysWOW64\Tasks\**'
       path64: 
-      - '\Windows\System32\Tasks'
-      - '\Windows\SysWOW64\Tasks'
-      para: ''
-      type: 'folder'
-      copyType: 'normal'
+      - '\Windows\System32\Tasks\**'
+      - '\Windows\SysWOW64\Tasks\**'
       description: 'Scheduled Tasks files'
+      
   Jump_List:
       output: 'Jump_List'
       path32: 
-      - '\Users\*\AppData\Roaming\Microsoft\Windows\Recent'
+      - '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\**'
       path64: 
-      - '\Users\*\AppData\Roaming\Microsoft\Windows\Recent'
-      para: ''
-      type: 'folder'
-      copyType: 'normal'
+      - '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\**'
       description: 'JumpList files'
+      
   BMC:
     output: 'BMC'
-    path32: '\Users\*\AppData\Local\Microsoft\Terminal Server Client\Cache'
-    path64: '\Users\*\AppData\Local\Microsoft\Terminal Server Client\Cache'
-    para: '*.bmc'
-    type: 'file'
-    copyType: 'normal'
+    path32: '\Users\*\AppData\Local\Microsoft\Terminal Server Client\Cache\'
+    path64: '\Users\*\AppData\Local\Microsoft\Terminal Server Client\Cache\'
+    files:  '*.bmc'
     description: 'BMC files for all the users'
+    
   prefetch:
     output: 'prefetch'
     path32: '\Windows\prefetch\'
     path64: '\Windows\prefetch\'
-    para: '*.pf'
-    type: 'file'
-    copyType: 'normal'
+    files:  '*.pf'
     description: 'Prefetch files'
+    
   WMITraceLogs:
     output: 'WMI Trace Logs'
-    path32: '\Windows\System32\LogFiles\WMI\'
-    path64: '\Windows\System32\LogFiles\WMI\'
-    para: ''
-    type: 'folder'
-    copyType: 'normal'
+    path32: '\Windows\System32\LogFiles\WMI\**'
+    path64: '\Windows\System32\LogFiles\WMI\**'
     description: 'WMI Trace Logs'
   
   BrowserHistory:
     output: 'BrowserHistory'
     path32: 
-    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default'
-    - '\Users\*\AppData\local\Google\Chrome\User Data\Default'
+    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default\'
+    - '\Users\*\AppData\local\Google\Chrome\User Data\Default\'
     - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\'
     - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\'
-    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\*'
+    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\'
     path64: 
-    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default'
-    - '\Users\*\AppData\local\Google\Chrome\User Data\Default'
+    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default\'
+    - '\Users\*\AppData\local\Google\Chrome\User Data\Default\'
     - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\'
     - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\'
-    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\*'
-    para: 
-    - 'History'
+    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\'
+    files:  
+    - 'History*'
     - 'Cache'
     - 'Cookies'
     - 'WebCacheV01.dat'
     - 'places.sqlite'
     - 'cookies.sqlite'
-    type: 'file'
-    copyType: 'justCopy'
     description: 'BrowserHistory Data'
 
   WERFiles:
     output: 'WER'
-    path32: '\ProgramData\Microsoft\Windows\WER\ReportArchive'
-    path64: '\ProgramData\Microsoft\Windows\WER\ReportArchive'
-    para: ''
-    type: 'folder'
-    copyType: 'normal'
+    path32: '\ProgramData\Microsoft\Windows\WER\ReportArchive\**'
+    path64: '\ProgramData\Microsoft\Windows\WER\ReportArchive\**'
     description: 'Windows Error Reporting Files'
 
   SystemInfo:
     output: 'SystemInfo'
     cmd: 'systeminfo'
-    type: 'run'
     description: 'Get system information'
-
-
-
-
- 
