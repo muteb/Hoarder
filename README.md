@@ -2,8 +2,7 @@
 This script is made to collect the most valuable artifacts for forensics or incident response investigation rather than imaging the whole hard drive.
 
 ## Executable Releases:
-You may find the executable binaries for x86 and x64 on 
->> will be added soon
+You may find the executable binaries for x86 and x64 on [Release 3.1.0](https://github.com/muteb/Hoarder/releases/tag/3.1.0)
 
 ## Installing Dependences
 
