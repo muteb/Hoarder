@@ -26,8 +26,9 @@ args_set.add_argument('-V', '--version', action="store_true", help='Print Hoarde
 args_set.add_argument('-v', '--verbose', action="store_true", help='Print details of hoarder message in console.')
 args_set.add_argument('-vv', '--very_verbose', action="store_true", help='Print more details (DEBUG) of hoarder message in console.')
 args_set.add_argument('-a', '--all', action="store_true", help='Get all (Default)')
+args_set.add_argument('-f', '--image_file', help='Use disk image as data source instead of the live machine disk image ')
 
-#args_set.add_argument('-v', '--volume', help='Select a volume letter to collect artifacts from (By default hoarder will automatically look for the root volume)')
+
 
 # set arguments for plugins
 argsplugins = args_set.add_argument_group('Plugins')
@@ -188,17 +189,26 @@ class Hoarder:
       pytsk3.TSK_FS_NAME_TYPE_VIRT: "v"
       }
 
-
+    # ==========
+    # parameters:
+    # config_file:      path to the yaml config file
+    # options:          options of collected files and plugins
+    # enabled_verbose   level of information to print
+    # output            output file name
+    # compress_level    compression level
+    # compress_method   compression method
+    # image_path        using disk image instead of the system disk
+    # ==========
     def __init__(self, 
                 config_file, 
                 options         = None, 
                 enabled_verbose = 0, 
                 output          = None, 
                 compress_level  = 6, 
-                compress_method = zipfile.ZIP_DEFLATED):
+                compress_method = zipfile.ZIP_DEFLATED,
+                image_path      = None):
          
-        self.options = options 
-        
+        self.options            = options 
         self.verbose            = enabled_verbose
         self.hostname           = os.getenv('COMPUTERNAME')
         self.disk_drive         = "C:"
@@ -233,27 +243,45 @@ class Hoarder:
         
         # make sure there are a OS on the disk 
         list_imgs = {}
-        count = 0
-        while True:
-            try:
-                self.logging("INFO" , "Check drive: \\\\.\\PhysicalDrive" + str(count) )
 
-                # get all the fs_info of all volumes of the drive
-                list_imgs["PhysicalDrive" + str(count)] = self.GetVolumes("\\\\.\\PhysicalDrive" + str(count))
+        # if the collection will be from disk image,
+        if image_path:
+            self.logging("INFO" , "Check disk image: [" + image_path + "]"  )
+            if not os.path.isfile(image_path):
+                self.logging("ERR" , "Disk image not found ["+image_path+"]")
 
-                if len(list_imgs["PhysicalDrive" + str(count)]) == 0:
-                    self.logging("WORNING" , "No NTFS Partition found on PhyisicalDrive" + str(count))
-                else:
-                    self.logging("INFO" , "Found ["+str(len(list_imgs["PhysicalDrive" + str(count)]))+"] NTFS partitions on drive ["+"PhysicalDrive" + str(count)+"] ")
+            # get all the fs_info of all volumes of the drive
+            list_imgs["DISK_IMAGE"] = self.GetVolumes(image_path)
 
-            except Exception as e:
-                if str(e) == "PHYSICAL_DRIVE_NOT_FOUND":
-                    self.logging("WORNING" , "There is no \\\\.\\PhysicalDrive" + str(count))
-                    break
-                else:
-                    self.logging("ERR" , "Error found on getting NTFS parition: " + str(e))
+            if len(list_imgs["DISK_IMAGE"]) == 0:
+                self.logging("WORNING" , "No NTFS Partition found on ["+image_path+"]")
+            else:
+                self.logging("INFO" , "Found ["+str(len(list_imgs["DISK_IMAGE"]))+"] NTFS partitions on ["+image_path+"]")
 
-            count += 1
+        # if not from disk image, then the current system disk
+        else:
+            count = 0
+            while True:
+                try:
+                    
+                    self.logging("INFO" , "Check drive: \\\\.\\PhysicalDrive" + str(count) )
+
+                    # get all the fs_info of all volumes of the drive
+                    list_imgs["PhysicalDrive" + str(count)] = self.GetVolumes("\\\\.\\PhysicalDrive" + str(count))
+
+                    if len(list_imgs["PhysicalDrive" + str(count)]) == 0:
+                        self.logging("WORNING" , "No NTFS Partition found on PhyisicalDrive" + str(count))
+                    else:
+                        self.logging("INFO" , "Found ["+str(len(list_imgs["PhysicalDrive" + str(count)]))+"] NTFS partitions on drive ["+"PhysicalDrive" + str(count)+"] ")
+
+                except Exception as e:
+                    if str(e) == "PHYSICAL_DRIVE_NOT_FOUND":
+                        self.logging("WORNING" , "There is no \\\\.\\PhysicalDrive" + str(count))
+                        break
+                    else:
+                        self.logging("ERR" , "Error found on getting NTFS parition: " + str(e))
+
+                count += 1
 
         # get full paths from config for enabled artifacts
         full_paths = self.GetConfigPaths()
@@ -657,7 +685,7 @@ if __name__ == '__main__':
         options = []
         v = vars(args)
         for a in v:
-            if a in ['all' , 'version' , 'verbose' , 'very_verbose']:
+            if a in ['all' , 'version' , 'verbose' , 'very_verbose' , "image_file"]:
                 continue
             if v[a]:
                 options.append(a) 
@@ -670,7 +698,8 @@ if __name__ == '__main__':
             elif args.verbose:
                 verbose = 1
             
-            h = Hoarder(hoarder_config , options=options , enabled_verbose=verbose)  
+            image_file = args.image_file
+            h = Hoarder(hoarder_config , options=options , enabled_verbose=verbose , image_path = image_file)  
             
         else:
             # Re-run the program with admin rights

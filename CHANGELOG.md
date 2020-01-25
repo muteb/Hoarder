@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [3.2.0] - 2020-01-25
+
+### Added:
+- Added handling forensics disk image `-f` switch, which collect the artifacts from disk image instead of the live disk
+- Added more artifacts to collect:
+  - Bits Admin database files
+  - Amcache files now collect all files in the folder, not just `Amcache.hve*`
+
+
+
 ## [3.1.0] - 2019-11-27
 
 ### Changed:
