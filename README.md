@@ -1,3 +1,5 @@
+<img src="https://github.com/muteb/Hoarder/blob/master/hoarder_logo.png" title="hoarder" height="25%" width="25%">
+
 # Hoarder
 This script is made to collect the most valuable artifacts for forensics or incident response investigation rather than imaging the whole hard drive.
 
