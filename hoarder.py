@@ -16,7 +16,7 @@ import sys
 import fnmatch
 
 
-__version__ = "3.1.0"
+__version__ = "3.2.0"
 
 hoarder_config = "Hoarder.yml"
 # Add the static arguments.
