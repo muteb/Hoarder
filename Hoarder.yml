@@ -176,17 +176,17 @@ all_artifacts:
   BrowserHistory:
     output: 'BrowserHistory'
     path32: 
-    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default\'
-    - '\Users\*\AppData\local\Google\Chrome\User Data\Default\'
-    - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\'
-    - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\'
-    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\'
+    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default\**'
+    - '\Users\*\AppData\local\Google\Chrome\User Data\Default\**'
+    - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\**'
+    - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\**'
+    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\**'
     path64: 
-    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default\'
-    - '\Users\*\AppData\local\Google\Chrome\User Data\Default\'
-    - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\'
-    - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\'
-    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\'
+    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default\**'
+    - '\Users\*\AppData\local\Google\Chrome\User Data\Default\**'
+    - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\**'
+    - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\**'
+    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\**'
     files:  
     - 'History*'
     - 'Cache'
@@ -198,8 +198,8 @@ all_artifacts:
 
   WERFiles:
     output: 'WER'
-    path32: '\ProgramData\Microsoft\Windows\WER\ReportArchive\**'
-    path64: '\ProgramData\Microsoft\Windows\WER\ReportArchive\**'
+    path32: '\ProgramData\Microsoft\Windows\WER\**'
+    path64: '\ProgramData\Microsoft\Windows\WER\**'
     description: 'Windows Error Reporting Files'
     
   BitsAdmin:
