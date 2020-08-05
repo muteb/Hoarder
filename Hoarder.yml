@@ -1,10 +1,32 @@
 output_Content:
  output: 'output'
 
-
+# wild cards:
 # use ** at the end to indicate recursive
 # use * any where to indicate any entry on the folder only (not recursive)
 # you can use * as widecard on the entry name, such as "*.evtx"
+
+# parsing:
+# parsing can be one parser. Example:
+#   parsers: <|parsingdir|>MFTECmd.exe -f <|path|$MFT> --csv <|output|> --csvf mft.csv'
+# parsing can also be a list. Example:
+#   parsers:
+#   - <|parsingdir|>MFTECmd.exe -f <|path|$MFT> --csv <|output|> --csvf mft.csv'
+#   - <|parsingdir|>LogFileParser.exe /LogFileFile:<|path|$LogFile>'
+# directives:
+# - <|path|>: e.g. <|path|$MFT> will be replaced with the path where all $MFT files under the artifact path exist.
+# -           To have direct it to a directory it must end with '\'. Example: <|path|\> or <|path|windows\>
+# - <|output|>: will be replaced with a unique output path to ensure no file is overwritten. |output| can be followed by a suffix (not a path)
+#               , for example <|output|amcache_command1> and the suffix will be added.
+# - <|parsingdir|>: this will be replaced with the path where all files in parsers.zip are extracted. This directive doesn't take a suffix.
+#                   this directive needs to proceed any use of a tool or supplied input in the parsers.zip.
+# Note: std.out is not logged or captured. std.err of run commands is logged in Hoarder.log. So, a command needs to handle output in an argument.
+#       If it doesn't a batch file can be created to overcome this limitation.
+# groups: groups are like tags and each artifact can be set to be part of one or more groups.
+#         In hoarder command line, one or more group(s) can be chosen and the artifacts tagged
+#         by this group will be used.
+#         If an artifact is chosen (e.g. --Events) and a group is chosen (e.g. -g mot), hoarder will process both.
+
 
 all_artifacts:
 
@@ -12,31 +34,29 @@ all_artifacts:
       output: 'Events'
       path32: '\windows\system32\winevt\Logs\'
       path64: '\windows\system32\winevt\Logs\'
+      groups: 'parsing'
       files: '*'
+      parsers: '<|parsingdir|>MasterParser.exe -p winevents -i <|path|.*> -o <|output|evtx.json>'
       description: 'Windows event logs'
 
   Ntfs: 
       output: 'Ntfs'
       path32: '\'
       path64: '\'
+      groups: 'parsing'
       files:  
       - $MFT
       - $MFTMirr
       - $LogFile
+      parsers: '<|parsingdir|>MasterParser.exe -p mft -i <|path|$MFT> -o <|output|mft.json>'
       description: '$MFT file'
-
-  prefetch:
-    output: 'prefetch'
-    path32: '\Windows\prefetch\'
-    path64: '\Windows\prefetch\'
-    files:  '*.pf'
-    description: 'Prefetch files'
-    
 
   Recent:
       output: 'Recent'
       path32: '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\**'
       path64: '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\**'
+      groups: 'parsing'
+      parsers: '<|parsingdir|>MasterParser.exe -p jumplist -i <|path|\> -o <|output|recent.json>'
       description: 'Recently opened files'
 
   Startup:
@@ -44,16 +64,21 @@ all_artifacts:
       path32: '\Windows\System32\WDI\LogFiles\StartupInfo\**'
       path64: '\Windows\System32\WDI\LogFiles\StartupInfo\**'
       description: 'Startup info'
+
   SRUM:
       output: 'srum'
       path32: '\Windows\System32\SRU\**'
       path64: '\Windows\System32\SRU\**'
+      groups: 'parsing'
+      parsers: '<|parsingdir|>MasterParser.exe -p srum -i <|path|SRUDB.dat> -o <|output|srum.json>'
       description: 'SRUM folder'
+
   Firwall:
       output: 'firewall'
       path32: '\Windows\System32\LogFiles\Firewall\**'
       path64: '\Windows\System32\LogFiles\Firewall\**'
       description: 'Firewall Logs'
+
   CCM:
       output: 'ccm_logs'
       path32: 
@@ -62,6 +87,8 @@ all_artifacts:
       path64: 
       - '\system32\ccm\logs\**'
       - '\Windows\ccm\logs\**'
+      groups: 'parsing'
+      parsers: '<|parsingdir|>MasterParser.exe -p sccm -i <|path|.*> -o <|output|sccm.json>'
       description: 'CCM Logs'
       
   WindowsIndexSearch:
@@ -70,6 +97,7 @@ all_artifacts:
       path64: '\programdata\microsoft\search\data\applications\windows\'
       files: Windows.edb
       description: 'Windows Search artifacts'
+  
   Config: 
       output: 'Config'
       path32: '\Windows\System32\config\'
@@ -84,6 +112,8 @@ all_artifacts:
       - BBI
       - ELAM
       - COMPONENTS
+      groups: 'parsing'
+      parsers: '<|parsingdir|>MasterParser.exe -p regsk -i <|path|\> -o <|output|config.json>'
       description: 'System hives'
   
   
@@ -92,12 +122,16 @@ all_artifacts:
       path32: '\Users\*\'
       path64: '\Users\*\'
       files:  'NTUSER.DAT*'
+      groups: 'parsing'
+      parsers: '<|parsingdir|>MasterParser.exe -p regsk -i <|path|\> -o <|output|ntuser.json>'
       description: 'All users hives'
   
   applications: 
       output: 'applications'
       path32: '\Windows\AppCompat\Programs\**'
       path64: '\Windows\AppCompat\Programs\**'
+      groups: 'parsing'
+      parsers: '<|parsingdir|>MasterParser.exe -p regsk -i <|path|\> -o <|output|amcache.json>'
       description: 'Amcache files'
   
   usrclass: 
@@ -105,13 +139,17 @@ all_artifacts:
       path32: '\Users\*\AppData\Local\Microsoft\Windows\'
       path64: '\Users\*\AppData\Local\Microsoft\Windows\'
       files:  'UsrClass.dat'
+      groups: 'parsing'
+      parsers: '<|parsingdir|>MasterParser.exe -p regsk -i <|path|\> -o <|output|usrclass.json>'
       description: 'UserClass.dat file for all the users'
       
   PowerShellHistory: 
       output: 'PowerShellHistory'
       path32: '\Users\*\Appdata\Roaming\Microsoft\Windows\PowerShell\PSReadline\'
       path64: '\Users\*\Appdata\Roaming\Microsoft\Windows\PowerShell\PSReadline\'
+      groups: 'parsing'
       files:  'ConsoleHost_history.txt'
+      parsers: '<|parsingdir|>MasterParser.exe -p pshistory -i <|path|ConsoleHost_history.txt> -o <|output|pshistory.json>'
       description: 'PowerShell history for all the users'
 
     
@@ -119,9 +157,9 @@ all_artifacts:
       output: 'RecycleBin'
       path32: '\$Recycle.Bin\**'
       path64: '\$Recycle.Bin\**'
-      files:  
-        - '$I*'
-        - '$R*'
+      groups: 'parsing'
+      files: '$I*'
+      parsers: '<|parsingdir|>MasterParser.exe -p recyclebin -i <|path|\> -o <|output|recyclebin.json>'
       description: 'RecycleBin Files'
   
   WMI:
@@ -132,7 +170,11 @@ all_artifacts:
       path64: 
       - '\Windows\System32\wbem\Repository\'
       - '\Windows\System32\wbem\Repository\FS\'
+      groups: 'parsing'
       files:  'OBJECTS.DATA'
+      parsers: 
+        - '<|parsingdir|>MasterParser.exe -p wmipersistence -i <|path|OBJECTS.DATA> -o <|output|wmipersistence.json>'
+        - '<|parsingdir|>MasterParser.exe -p rua -i <|path|OBJECTS.DATA> -o <|output|wmirua.json>'
       description: 'WMI OBJECTS.DATA file'
   
   scheduled_task:
@@ -143,15 +185,9 @@ all_artifacts:
       path64: 
       - '\Windows\System32\Tasks\**'
       - '\Windows\SysWOW64\Tasks\**'
+      groups: 'parsing'
+      parsers: '<|parsingdir|>MasterParser.exe -p scheduledtasks -i <|path|\> -o <|output|scheduledtasks.json>'
       description: 'Scheduled Tasks files'
-      
-  Jump_List:
-      output: 'Jump_List'
-      path32: 
-      - '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\**'
-      path64: 
-      - '\Users\*\AppData\Roaming\Microsoft\Windows\Recent\**'
-      description: 'JumpList files'
       
   BMC:
     output: 'BMC'
@@ -165,8 +201,10 @@ all_artifacts:
     path32: '\Windows\prefetch\'
     path64: '\Windows\prefetch\'
     files:  '*.pf'
+    groups: 'parsing'
+    parsers: '<|parsingdir|>MasterParser.exe -p prefetch -i <|path|\> -o <|output|prefetch.json>'
     description: 'Prefetch files'
-    
+
   WMITraceLogs:
     output: 'WMI Trace Logs'
     path32: '\Windows\System32\LogFiles\WMI\**'
@@ -176,17 +214,17 @@ all_artifacts:
   BrowserHistory:
     output: 'BrowserHistory'
     path32: 
-    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default\**'
-    - '\Users\*\AppData\local\Google\Chrome\User Data\Default\**'
-    - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\**'
-    - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\**'
-    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\**'
+    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default\'
+    - '\Users\*\AppData\local\Google\Chrome\User Data\Default\'
+    - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\'
+    - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\'
+    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\'
     path64: 
-    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default\**'
-    - '\Users\*\AppData\local\Google\Chrome\User Data\Default\**'
-    - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\**'
-    - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\**'
-    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\**'
+    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default\'
+    - '\Users\*\AppData\local\Google\Chrome\User Data\Default\'
+    - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\'
+    - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\'
+    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\'
     files:  
     - 'History*'
     - 'Cache'
@@ -194,20 +232,29 @@ all_artifacts:
     - 'WebCacheV01.dat'
     - 'places.sqlite'
     - 'cookies.sqlite'
+    groups: 'parsing'
+    parsers: 
+      - '<|parsingdir|>MasterParser.exe -p browserhistory -i <|path|History> -o <|output|chromehistory.json>'
+      - '<|parsingdir|>MasterParser.exe -p browserhistory -i <|path|WebCacheV01.dat> -o <|output|iehistory.json>'
+      - '<|parsingdir|>MasterParser.exe -p browserhistory -i <|path|places.sqlite> -o <|output|firefoxhistory.json>'
     description: 'BrowserHistory Data'
 
   WERFiles:
     output: 'WER'
-    path32: '\ProgramData\Microsoft\Windows\WER\**'
-    path64: '\ProgramData\Microsoft\Windows\WER\**'
+    path32: '\ProgramData\Microsoft\Windows\WER\ReportArchive\**'
+    path64: '\ProgramData\Microsoft\Windows\WER\ReportArchive\**'
+    groups: 'parsing'
+    parsers: '<|parsingdir|>MasterParser.exe -p wer -i <|path|\> -o <|output|wer.json>'
     description: 'Windows Error Reporting Files'
     
   BitsAdmin:
     output: 'BitsAdmin'
     path32: '\ProgramData\Microsoft\Network\Downloader\**'
     path64: '\ProgramData\Microsoft\Network\Downloader\**'
+    groups: 'parsing'
+    parsers: '<|parsingdir|>MasterParser.exe -p bitsadmin -i <|path|qmgr.db> -o <|output|bitsadmin.json>'
     description: 'Bits Admin Database (QMGR database)'
-    
+  
   SystemInfo:
     output: 'SystemInfo'
     cmd: 'systeminfo'
