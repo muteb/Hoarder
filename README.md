@@ -173,7 +173,7 @@ To install all Hoarder dependencies, run the following command from an elevated 
 
 `pip install -r requirements.txt` 
 
-### Freezing MasterParser into a binary
+### Freezing Hoarder into a binary
 If you want to freeze your own binary make sure you install PyInstaller [3.6](https://www.pyinstaller.org/). You may need to change or add to this command if your changes contain [hidden imports](https://pyinstaller.readthedocs.io/en/stable/usage.html), [data files](https://pyinstaller.readthedocs.io/en/stable/usage.html), or [dll dependencies](https://pyinstaller.readthedocs.io/en/stable/usage.html) that PyInstaller needs to know about.
 Here is the command for the current release:
 
