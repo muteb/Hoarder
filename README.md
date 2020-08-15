@@ -137,7 +137,7 @@ It can also be a list. Example:
 ## Parsing
 Starting from hoarder 4.0.0, hoarder supports parsing collected artifacts. There are three major parts to parsing:
  1. **parsers.zip:** contains all of your parser binaries, scripts, and data files. Hoarder binary release comes prepackaged with [MasterParser](https://github.com/alwashmi/MasterParser/releases/latest). To add your own parsers, place a `parsers.zip` next to `hoarder.exe` containing all of your parsers used. If you are running from source create your own `parsers.zip` and rename or delete the default `parsers.zip`.
- 2. **configuration:** in Hoarder.yml, add your parser command (refer to [Add an Artifact to Hoarder.yml](#add-an-artifact-to-hoarder-yml))
+ 2. **configuration:** in Hoarder.yml, add your parser command (refer to [Add an Artifact to Hoarder.yml](#add-an-artifact-to-hoarderyml))
  3. **command-line arguments:** `-pa` to have hoarder bring both raw and parsed artifacts. `-n` to have hoarder bring only parsing results. Parsing arguments work with other switches as you would expect. Meaning, If a group or a single artifact is chosen, parsing will only be applied to the chosen artifacts.
 
 ## Plugins and Commands:
