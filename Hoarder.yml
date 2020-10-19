@@ -119,8 +119,12 @@ all_artifacts:
   
   Ntuser: 
       output: 'Ntuser'
-      path32: '\Users\*\'
-      path64: '\Users\*\'
+      path32: 
+      - '\Users\*\'
+      - '\Windows\System32\config\systemprofile\'
+      path64: 
+      - '\Users\*\'
+      - '\Windows\System32\config\systemprofile\'
       files:  'NTUSER.DAT*'
       groups: 'parsing'
       parsers: '<|parsingdir|>MasterParser.exe -p regsk -i <|path|\> -o <|output|ntuser.json>'
@@ -214,17 +218,17 @@ all_artifacts:
   BrowserHistory:
     output: 'BrowserHistory'
     path32: 
-    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default\'
-    - '\Users\*\AppData\local\Google\Chrome\User Data\Default\'
-    - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\'
-    - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\'
-    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\'
+    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default\**'
+    - '\Users\*\AppData\local\Google\Chrome\User Data\Default\**'
+    - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\**'
+    - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\**'
+    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\**'
     path64: 
-    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default\'
-    - '\Users\*\AppData\local\Google\Chrome\User Data\Default\'
-    - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\'
-    - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\'
-    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\'
+    - '\Users\*\AppData\Roaming\Google\Chrome\User Data\Default\**'
+    - '\Users\*\AppData\local\Google\Chrome\User Data\Default\**'
+    - '\Users\*\AppData\Local\Microsoft\Windows\INetCookies\**'
+    - '\Users\*\AppData\Local\Microsoft\Windows\WebCache\**'
+    - '\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\**'
     files:  
     - 'History*'
     - 'Cache'
@@ -241,8 +245,8 @@ all_artifacts:
 
   WERFiles:
     output: 'WER'
-    path32: '\ProgramData\Microsoft\Windows\WER\ReportArchive\**'
-    path64: '\ProgramData\Microsoft\Windows\WER\ReportArchive\**'
+    path32: '\ProgramData\Microsoft\Windows\WER\**'
+    path64: '\ProgramData\Microsoft\Windows\WER\**'
     groups: 'parsing'
     parsers: '<|parsingdir|>MasterParser.exe -p wer -i <|path|\> -o <|output|wer.json>'
     description: 'Windows Error Reporting Files'
@@ -254,6 +258,20 @@ all_artifacts:
     groups: 'parsing'
     parsers: '<|parsingdir|>MasterParser.exe -p bitsadmin -i <|path|qmgr.db> -o <|output|bitsadmin.json>'
     description: 'Bits Admin Database (QMGR database)'
+  
+  CertUtilCache:
+    output: 'CertUtilCache'
+    path32: 
+    - '\Windows\System32\config\systemprofile\AppData\LocalLow\Microsoft\CryptnetUrlCache\**'
+    - '\Windows\SysWOW64\config\systemprofile\AppData\LocalLow\Microsoft\CryptnetUrlCache\**'
+    - '\Users\*\AppData\LocalLow\Microsoft\CryptnetUrlCache\**'
+    path64:
+    - '\Windows\System32\config\systemprofile\AppData\LocalLow\Microsoft\CryptnetUrlCache\**'
+    - '\Windows\SysWOW64\config\systemprofile\AppData\LocalLow\Microsoft\CryptnetUrlCache\**'
+    - '\Users\*\AppData\LocalLow\Microsoft\CryptnetUrlCache\**'
+    description: 'CertUtilCache files (metadata & content)'
+
+  # Commands
   
   SystemInfo:
     output: 'SystemInfo'
